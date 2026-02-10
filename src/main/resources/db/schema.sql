@@ -25,10 +25,11 @@ CREATE TABLE `t_user` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表';
 
 -- 插入测试数据（密码使用 BCrypt 加密）
--- admin123: $2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EH
+-- admin123: $2a$10$YTGXvPt9TCyCjPJNyDgQX.XqZJXhHYdhi/KhxSKmAUqTvHm.KHV2O
+-- test123: $2a$10$YTGXvPt9TCyCjPJNyDgQX.XqZJXhHYdhi/KhxSKmAUqTvHm.KHV2O
 INSERT INTO `t_user` (`username`, `password`, `email`, `phone`, `nickname`, `status`) VALUES
-('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EH', 'admin@example.com', '13800138000', '管理员', 1),
-('test', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EH', 'test@example.com', '13800138001', '测试用户', 1);
+('admin', '$2a$10$YTGXvPt9TCyCjPJNyDgQX.XqZJXhHYdhi/KhxSKmAUqTvHm.KHV2O', 'admin@example.com', '13800138000', '管理员', 1),
+('test', '$2a$10$YTGXvPt9TCyCjPJNyDgQX.XqZJXhHYdhi/KhxSKmAUqTvHm.KHV2O', 'test@example.com', '13800138001', '测试用户', 1);
 
 -- ========================================
 -- 角色表
