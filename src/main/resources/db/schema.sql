@@ -24,9 +24,9 @@ CREATE TABLE `t_user` (
     KEY `idx_phone` (`phone`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表';
 
--- 插入测试数据（密码使用 BCrypt 加密）
--- admin123: $2a$10$YTGXvPt9TCyCjPJNyDgQX.XqZJXhHYdhi/KhxSKmAUqTvHm.KHV2O
--- test123: $2a$10$YTGXvPt9TCyCjPJNyDgQX.XqZJXhHYdhi/KhxSKmAUqTvHm.KHV2O
+-- 插入测试数据
+-- 密码说明: 两个用户都使用密码 'admin123'
+-- BCrypt hash: $2a$10$YTGXvPt9TCyCjPJNyDgQX.XqZJXhHYdhi/KhxSKmAUqTvHm.KHV2O
 INSERT INTO `t_user` (`username`, `password`, `email`, `phone`, `nickname`, `status`) VALUES
 ('admin', '$2a$10$YTGXvPt9TCyCjPJNyDgQX.XqZJXhHYdhi/KhxSKmAUqTvHm.KHV2O', 'admin@example.com', '13800138000', '管理员', 1),
 ('test', '$2a$10$YTGXvPt9TCyCjPJNyDgQX.XqZJXhHYdhi/KhxSKmAUqTvHm.KHV2O', 'test@example.com', '13800138001', '测试用户', 1);
