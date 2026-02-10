@@ -64,6 +64,15 @@ spring:
       write-dates-as-timestamps: false
     default-property-inclusion: non_null
 
+# JWT 配置
+jwt:
+  # JWT 密钥（生产环境请使用更复杂的密钥）
+  secret: ddd-demo-jwt-secret-key-2024-spring-boot-security
+  # Token 有效期（毫秒）默认 7 天
+  expiration: 604800000
+  # Refresh Token 有效期（毫秒）默认 30 天
+  refresh-expiration: 2592000000
+
 # MyBatis Plus 配置
 mybatis-plus:
   mapper-locations: classpath*:mapper/**/*Mapper.xml
