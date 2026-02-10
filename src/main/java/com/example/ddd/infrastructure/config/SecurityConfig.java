@@ -44,23 +44,25 @@ public class SecurityConfig {
      */
     private static final String[] PUBLIC_ENDPOINTS = {
             // 认证相关
-            "/api/auth/**",
-            "/api/auth/login",
-            "/api/auth/register",
-            "/api/auth/refresh",
-            "/api/auth/captcha",
+            "/auth/**",
+            "/auth/login",
+            "/auth/register",
+            "/auth/refresh",
+            "/auth/captcha",
 
             // Druid 监控
-            "/api/druid/**",
+            "/druid/**",
 
             // 错误页面
             "/error",
 
-            // Swagger API 文档（可选）
+            // Swagger API 文档
+            "/swagger-ui.html",
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/swagger-resources/**",
             "/webjars/**",
+            "/api-docs/**",
     };
 
     /**

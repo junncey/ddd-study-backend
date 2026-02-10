@@ -13,6 +13,10 @@
 - **Lombok** - 简化代码
 - **MapStruct** - 对象映射
 - **Hutool** - 工具类库
+- **SpringDoc OpenAPI** - API 接口文档（Swagger）
+- **Spring Security** - 安全框架
+- **JWT** - JSON Web Token 认证
+- **Druid** - 数据库监控
 
 ## 项目结构
 
@@ -268,6 +272,28 @@ public class ProductApplicationService extends ApplicationService {
 }
 ```
 
+## API 文档
+
+### Swagger UI
+
+访问 Swagger UI 在线接口文档：http://localhost:8080/api/swagger-ui.html
+
+或者在浏览器中打开：http://localhost:8080/api/swagger-ui/index.html
+
+### 使用 JWT 认证
+
+1. 调用 `/api/auth/login` 接口获取 Token
+2. 点击 Swagger UI 右上角的 **Authorize** 按钮
+3. 在弹出框中输入 Token（格式：`Bearer your-token-here`）
+4. 点击 **Authorize** 确认
+5. 之后的所有请求都会自动携带认证信息
+
+### OpenAPI JSON
+
+访问 OpenAPI JSON 规范：http://localhost:8080/api/v3/api-docs
+
+可用于生成客户端 SDK 或集成到其他文档平台。
+
 ## 数据库监控
 
 访问 Druid 监控面板：http://localhost:8080/api/druid
@@ -275,7 +301,3 @@ public class ProductApplicationService extends ApplicationService {
 默认账号：
 - 用户名：`admin`
 - 密码：`admin`
-
-## 许可证
-
-MIT License
