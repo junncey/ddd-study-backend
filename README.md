@@ -5,7 +5,7 @@
 ## 技术栈
 
 - **Java 17**
-- **Spring Boot 3.2.0**
+- **Spring Boot 3.5.10**
 - **MyBatis Plus 3.5.5** - ORM 框架
 - **MySQL 8.0** - 数据库
 - **Redis** - 缓存
