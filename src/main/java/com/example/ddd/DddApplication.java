@@ -12,7 +12,6 @@ import org.springframework.cache.annotation.EnableCaching;
  */
 @SpringBootApplication
 @EnableCaching
-@MapperScan("com.example.ddd.infrastructure.persistence.mapper")
 public class DddApplication {
 
     public static void main(String[] args) {

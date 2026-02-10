@@ -1,6 +1,7 @@
 package com.example.ddd.domain.repository;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
 /**
  * 仓储接口基类
@@ -9,7 +10,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  * @param <T> 实体类型
  * @author DDD Demo
  */
-public interface BaseRepository<T> extends BaseMapper<T> {
+public interface BaseRepository<T> {
 
     /**
      * 根据ID查找实体
@@ -17,19 +18,15 @@ public interface BaseRepository<T> extends BaseMapper<T> {
      * @param id ID
      * @return 实体对象
      */
-    default T findById(Long id) {
-        return selectById(id);
-    }
+    T findById(Long id);
 
     /**
      * 保存实体
      *
      * @param entity 实体对象
-     * @return 影响行数
+     * @return 保存后的实体
      */
-    default int save(T entity) {
-        return insert(entity);
-    }
+    T save(T entity);
 
     /**
      * 更新实体
@@ -37,9 +34,7 @@ public interface BaseRepository<T> extends BaseMapper<T> {
      * @param entity 实体对象
      * @return 影响行数
      */
-    default int update(T entity) {
-        return updateById(entity);
-    }
+    int update(T entity);
 
     /**
      * 删除实体
@@ -47,7 +42,13 @@ public interface BaseRepository<T> extends BaseMapper<T> {
      * @param id ID
      * @return 影响行数
      */
-    default int delete(Long id) {
-        return deleteById(id);
-    }
+    int delete(Long id);
+
+    /**
+     * 分页查询
+     *
+     * @param page 分页对象
+     * @return 分页结果
+     */
+    IPage<T> page(Page<T> page);
 }

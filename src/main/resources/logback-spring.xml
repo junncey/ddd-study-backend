@@ -39,6 +39,12 @@
     <logger name="com.baomidou.mybatisplus" level="DEBUG"/>
     <logger name="org.springframework" level="INFO"/>
 
+    <!-- 默认配置（当没有激活任何 profile 时使用） -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+
     <!-- 开发环境 -->
     <springProfile name="dev">
         <root level="DEBUG">

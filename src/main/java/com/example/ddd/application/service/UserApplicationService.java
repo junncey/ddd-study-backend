@@ -113,6 +113,6 @@ public class UserApplicationService extends ApplicationService {
      */
     @Cacheable(value = "users", key = "'page:' + #current + ':' + #size")
     public IPage<User> pageUsers(Long current, Long size) {
-        return userRepository.selectPage(new Page<>(current, size), null);
+        return userRepository.page(new Page<>(current, size));
     }
 }

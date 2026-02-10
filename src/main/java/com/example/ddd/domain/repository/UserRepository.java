@@ -16,11 +16,7 @@ public interface UserRepository extends BaseRepository<User> {
      * @param username 用户名
      * @return 用户对象
      */
-    default User findByUsername(String username) {
-        return lambdaQuery()
-                .eq(User::getUsername, username)
-                .one();
-    }
+    User findByUsername(String username);
 
     /**
      * 根据邮箱查询用户
@@ -28,11 +24,7 @@ public interface UserRepository extends BaseRepository<User> {
      * @param email 邮箱
      * @return 用户对象
      */
-    default User findByEmail(String email) {
-        return lambdaQuery()
-                .eq(User::getEmail, email)
-                .one();
-    }
+    User findByEmail(String email);
 
     /**
      * 检查用户名是否存在
@@ -40,9 +32,5 @@ public interface UserRepository extends BaseRepository<User> {
      * @param username 用户名
      * @return 是否存在
      */
-    default boolean existsByUsername(String username) {
-        return lambdaQuery()
-                .eq(User::getUsername, username)
-                .count() > 0;
-    }
+    boolean existsByUsername(String username);
 }
