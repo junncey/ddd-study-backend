@@ -4,7 +4,7 @@ import com.example.ddd.application.ApplicationService;
 import com.example.ddd.infrastructure.security.CaptchaUtil;
 import com.example.ddd.interfaces.rest.dto.auth.CaptchaResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class CaptchaApplicationService extends ApplicationService {
 
-    private final StringRedisTemplate redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     /**
      * 验证码 Redis Key 前缀
@@ -34,7 +34,7 @@ public class CaptchaApplicationService extends ApplicationService {
      */
     private static final long CAPTCHA_EXPIRE_MINUTES = 5;
 
-    public CaptchaApplicationService(StringRedisTemplate redisTemplate) {
+    public CaptchaApplicationService(RedisTemplate<String, Object> redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 
@@ -91,7 +91,8 @@ public class CaptchaApplicationService extends ApplicationService {
         }
 
         String redisKey = CAPTCHA_KEY_PREFIX + captchaKey;
-        String storedCode = redisTemplate.opsForValue().get(redisKey);
+        Object storedObj = redisTemplate.opsForValue().get(redisKey);
+        String storedCode = storedObj != null ? storedObj.toString() : null;
 
         if (storedCode == null) {
             log.warn("验证码不存在或已过期: {}", captchaKey);
