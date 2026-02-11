@@ -68,7 +68,7 @@ public class AuthApplicationService extends ApplicationService {
                     .id(userDetails.getId())
                     .username(userDetails.getUsername())
                     .email(userDetails.getEmail())
-                    .phone(user != null ? user.getPhone() : null)
+                    .phone(user != null && user.getPhone() != null ? user.getPhone().getValue() : null)
                     .nickname(user != null ? user.getNickname() : null)
                     .build();
 

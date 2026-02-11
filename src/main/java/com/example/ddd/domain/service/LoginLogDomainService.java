@@ -1,6 +1,8 @@
 package com.example.ddd.domain.service;
 
 import com.example.ddd.domain.model.entity.LoginLog;
+import com.example.ddd.domain.model.valueobject.LoginStatus;
+import com.example.ddd.domain.model.valueobject.Status;
 import com.example.ddd.domain.repository.LoginLogRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +46,7 @@ public class LoginLogDomainService extends DomainService {
                 .loginIp(loginIp)
                 .browser(browser)
                 .os(os)
-                .status(1)
+                .status(Status.ofLogin(LoginStatus.SUCCESS))
                 .message("登录成功")
                 .build();
 
@@ -62,7 +64,7 @@ public class LoginLogDomainService extends DomainService {
         LoginLog loginLog = LoginLog.builder()
                 .username(username)
                 .loginIp(loginIp)
-                .status(0)
+                .status(Status.ofLogin(LoginStatus.FAILED))
                 .message(message)
                 .build();
 

@@ -32,7 +32,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         }
 
         // 检查用户状态
-        if (user.getStatus() == null || user.getStatus() != 1) {
+        if (user.getStatus() == null || !user.getStatus().isEnabled()) {
             log.error("用户已被禁用: {}", username);
             throw new UsernameNotFoundException("用户已被禁用: " + username);
         }

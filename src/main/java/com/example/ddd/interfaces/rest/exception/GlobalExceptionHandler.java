@@ -53,6 +53,16 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 处理非法参数异常
+     * 用于处理值对象验证失败的异常
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public Response<?> handleIllegalArgument(IllegalArgumentException e) {
+        log.warn("参数验证失败: {}", e.getMessage());
+        return Response.fail(400, e.getMessage());
+    }
+
+    /**
      * 处理未知异常
      */
     @ExceptionHandler(Exception.class)

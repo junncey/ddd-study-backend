@@ -3,13 +3,15 @@ package com.example.ddd.interfaces.rest.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.example.ddd.application.service.UserApplicationService;
 import com.example.ddd.domain.model.entity.User;
+import com.example.ddd.domain.model.valueobject.Status;
+import com.example.ddd.domain.model.valueobject.UserStatus;
+import com.example.ddd.interfaces.rest.converter.UserConverter;
 import com.example.ddd.interfaces.rest.dto.UserCreateRequest;
 import com.example.ddd.interfaces.rest.dto.UserResponse;
 import com.example.ddd.interfaces.rest.dto.UserUpdateRequest;
 import com.example.ddd.interfaces.rest.vo.Response;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserApplicationService userApplicationService;
+    private final UserConverter userConverter;
 
     /**
      * 创建用户
@@ -33,12 +36,14 @@ public class UserController {
      */
     @PostMapping
     public Response<UserResponse> create(@Valid @RequestBody UserCreateRequest request) {
-        User user = new User();
-        BeanUtils.copyProperties(request, user);
-        user.setStatus(1); // 默认启用
+        User user = userConverter.toEntity(request);
+        // 设置默认状态为启用
+        if (user.getStatus() == null) {
+            user.setStatus(Status.ofUser(UserStatus.ENABLED));
+        }
 
         User createdUser = userApplicationService.createUser(user);
-        return Response.success(toResponse(createdUser));
+        return Response.success(userConverter.toResponse(createdUser));
     }
 
     /**
@@ -49,11 +54,10 @@ public class UserController {
      */
     @PutMapping
     public Response<UserResponse> update(@Valid @RequestBody UserUpdateRequest request) {
-        User user = new User();
-        BeanUtils.copyProperties(request, user);
+        User user = userConverter.toEntity(request);
 
         User updatedUser = userApplicationService.updateUser(user);
-        return Response.success(toResponse(updatedUser));
+        return Response.success(userConverter.toResponse(updatedUser));
     }
 
     /**
@@ -77,7 +81,7 @@ public class UserController {
     @GetMapping("/{id}")
     public Response<UserResponse> getById(@PathVariable Long id) {
         User user = userApplicationService.getUserById(id);
-        return Response.success(toResponse(user));
+        return Response.success(userConverter.toResponse(user));
     }
 
     /**
@@ -89,7 +93,7 @@ public class UserController {
     @GetMapping("/username/{username}")
     public Response<UserResponse> getByUsername(@PathVariable String username) {
         User user = userApplicationService.getUserByUsername(username);
-        return Response.success(toResponse(user));
+        return Response.success(userConverter.toResponse(user));
     }
 
     /**
@@ -106,19 +110,7 @@ public class UserController {
         IPage<User> page = userApplicationService.pageUsers(current, size);
 
         // 转换为响应DTO
-        IPage<UserResponse> responsePage = page.convert(this::toResponse);
+        IPage<UserResponse> responsePage = page.convert(userConverter::toResponse);
         return Response.success(responsePage);
-    }
-
-    /**
-     * 转换为响应DTO
-     *
-     * @param user 用户实体
-     * @return 响应DTO
-     */
-    private UserResponse toResponse(User user) {
-        UserResponse response = new UserResponse();
-        BeanUtils.copyProperties(user, response);
-        return response;
     }
 }

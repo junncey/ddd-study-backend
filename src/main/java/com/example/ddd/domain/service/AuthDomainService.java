@@ -1,6 +1,10 @@
 package com.example.ddd.domain.service;
 
 import com.example.ddd.domain.model.entity.User;
+import com.example.ddd.domain.model.valueobject.Email;
+import com.example.ddd.domain.model.valueobject.PhoneNumber;
+import com.example.ddd.domain.model.valueobject.Status;
+import com.example.ddd.domain.model.valueobject.UserStatus;
 import com.example.ddd.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +40,7 @@ public class AuthDomainService extends DomainService {
         }
 
         // 检查用户状态
-        if (user.getStatus() == null || user.getStatus() != 1) {
+        if (user.getStatus() == null || !user.getStatus().isEnabled()) {
             log.warn("用户已被禁用: {}", username);
             return null;
         }
@@ -62,8 +66,8 @@ public class AuthDomainService extends DomainService {
      * @param email 邮箱
      * @return 是否存在
      */
-    public boolean checkEmailExists(String email) {
-        return userRepository.findByEmail(email) != null;
+    public boolean checkEmailExists(Email email) {
+        return userRepository.findByEmail(email.getValue()) != null;
     }
 
     /**
@@ -87,7 +91,7 @@ public class AuthDomainService extends DomainService {
 
         // 设置默认状态为启用
         if (user.getStatus() == null) {
-            user.setStatus(1);
+            user.setStatus(Status.ofUser(UserStatus.ENABLED));
         }
 
         // 保存用户

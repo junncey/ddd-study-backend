@@ -1,9 +1,14 @@
 package com.example.ddd.domain.model.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.example.ddd.domain.model.valueobject.LoginStatus;
+import com.example.ddd.domain.model.valueobject.Status;
+import com.example.ddd.infrastructure.persistence.handler.LoginStatusTypeHandler;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
@@ -12,7 +17,8 @@ import lombok.NoArgsConstructor;
  *
  * @author DDD Demo
  */
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -53,7 +59,8 @@ public class LoginLog extends BaseEntity {
     /**
      * 登录状态 0-失败 1-成功
      */
-    private Integer status;
+    @TableField(typeHandler = LoginStatusTypeHandler.class)
+    private Status<LoginStatus> status;
 
     /**
      * 提示信息

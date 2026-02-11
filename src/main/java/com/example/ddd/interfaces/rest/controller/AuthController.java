@@ -3,6 +3,10 @@ package com.example.ddd.interfaces.rest.controller;
 import com.example.ddd.application.service.AuthApplicationService;
 import com.example.ddd.application.service.CaptchaApplicationService;
 import com.example.ddd.domain.model.entity.User;
+import com.example.ddd.domain.model.valueobject.Email;
+import com.example.ddd.domain.model.valueobject.PhoneNumber;
+import com.example.ddd.domain.model.valueobject.Status;
+import com.example.ddd.domain.model.valueobject.UserStatus;
 import com.example.ddd.infrastructure.security.UserDetailsImpl;
 import com.example.ddd.infrastructure.util.IpUtil;
 import com.example.ddd.interfaces.rest.dto.auth.LoginRequest;
@@ -109,10 +113,10 @@ public class AuthController {
         user.setUsername(request.getUsername());
         // 密码加密
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setEmail(request.getEmail());
-        user.setPhone(request.getPhone());
+        user.setEmail(request.getEmail() != null ? Email.of(request.getEmail()) : null);
+        user.setPhone(request.getPhone() != null ? PhoneNumber.of(request.getPhone()) : null);
         user.setNickname(request.getNickname() != null ? request.getNickname() : request.getUsername());
-        user.setStatus(1);
+        user.setStatus(Status.ofUser(UserStatus.ENABLED));
 
         // 调用应用服务注册
         User registeredUser = authApplicationService.register(user);
@@ -169,7 +173,7 @@ public class AuthController {
                 .id(userDetails.getId())
                 .username(userDetails.getUsername())
                 .email(userDetails.getEmail())
-                .phone(user != null ? user.getPhone() : null)
+                .phone(user != null ? (user.getPhone() != null ? user.getPhone().getValue() : null) : null)
                 .nickname(user != null ? user.getNickname() : null)
                 .build();
 

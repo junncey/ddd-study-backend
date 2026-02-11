@@ -63,8 +63,8 @@ public class UserDetailsImpl implements UserDetails {
                 user.getId(),
                 user.getUsername(),
                 user.getPassword(),
-                user.getEmail(),
-                user.getStatus(),
+                user.getEmail() != null ? user.getEmail().getValue() : null,
+                user.getStatus() != null ? user.getStatus().getValue() : null,
                 authorities
         );
     }
@@ -77,8 +77,8 @@ public class UserDetailsImpl implements UserDetails {
                 user.getId(),
                 user.getUsername(),
                 user.getPassword(),
-                user.getEmail(),
-                user.getStatus(),
+                user.getEmail() != null ? user.getEmail().getValue() : null,
+                user.getStatus() != null ? user.getStatus().getValue() : null,
                 authorities
         );
     }
