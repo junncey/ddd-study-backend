@@ -2,6 +2,7 @@ package com.example.ddd.domain.service;
 
 import com.example.ddd.domain.model.entity.Permission;
 import com.example.ddd.domain.repository.PermissionRepository;
+import com.example.ddd.domain.repository.RolePermissionRepository;
 import com.example.ddd.interfaces.rest.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ import java.util.List;
 public class PermissionDomainService extends DomainService {
 
     private final PermissionRepository permissionRepository;
+    private final RolePermissionRepository rolePermissionRepository;
 
     /**
      * 创建权限
@@ -115,7 +117,10 @@ public class PermissionDomainService extends DomainService {
             throw new BusinessException("存在子权限，无法删除");
         }
 
-        // TODO: 检查权限是否已分配给角色
+        // 检查权限是否已分配给角色
+        if (rolePermissionRepository.existsByPermissionId(id)) {
+            throw new BusinessException("该权限已分配给角色，无法删除");
+        }
 
         // 删除权限
         permissionRepository.delete(id);

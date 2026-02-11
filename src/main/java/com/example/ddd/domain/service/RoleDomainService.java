@@ -2,6 +2,7 @@ package com.example.ddd.domain.service;
 
 import com.example.ddd.domain.model.entity.Role;
 import com.example.ddd.domain.repository.RoleRepository;
+import com.example.ddd.domain.repository.UserRoleRepository;
 import com.example.ddd.interfaces.rest.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class RoleDomainService extends DomainService {
 
     private final RoleRepository roleRepository;
+    private final UserRoleRepository userRoleRepository;
 
     /**
      * 创建角色
@@ -86,7 +88,10 @@ public class RoleDomainService extends DomainService {
             throw new BusinessException("角色不存在");
         }
 
-        // TODO: 检查角色是否已分配给用户
+        // 检查角色是否已分配给用户
+        if (userRoleRepository.existsByRoleId(id)) {
+            throw new BusinessException("该角色已分配给用户，无法删除");
+        }
 
         // 删除角色
         roleRepository.delete(id);

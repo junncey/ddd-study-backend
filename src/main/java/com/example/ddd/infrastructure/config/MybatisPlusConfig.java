@@ -10,6 +10,8 @@ import org.apache.ibatis.reflection.MetaObject;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
 
@@ -69,11 +71,19 @@ public class MybatisPlusConfig {
 
             /**
              * 获取当前用户
-             * 这里可以集成 Spring Security 或 SaToken 等安全框架
+             * 从 Spring Security 安全上下文中获取当前登录用户
              */
             private String getCurrentUser() {
-                // TODO: 从安全上下文中获取当前登录用户
-                return "system";
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                if (authentication != null && authentication.isAuthenticated()) {
+                    // 如果是匿名用户或未认证，返回默认值
+                    if (authentication.getPrincipal() instanceof String) {
+                        return "noLogin";
+                    }
+                    // 返回当前登录用户名
+                    return authentication.getName();
+                }
+                return "noLogin";
             }
         };
     }

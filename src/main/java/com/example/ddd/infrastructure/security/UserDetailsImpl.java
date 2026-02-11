@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Spring Security 用户详情实现
@@ -56,8 +57,23 @@ public class UserDetailsImpl implements UserDetails {
     public static UserDetailsImpl create(User user) {
         Set<GrantedAuthority> authorities = Collections.emptySet();
 
-        // TODO: 从数据库加载用户的角色和权限
-        // 暂时使用空权限集合，后续可以添加角色和权限加载逻辑
+        return new UserDetailsImpl(
+                user.getId(),
+                user.getUsername(),
+                user.getPassword(),
+                user.getEmail() != null ? user.getEmail().getValue() : null,
+                user.getStatus() != null ? user.getStatus().getValue() : null,
+                authorities
+        );
+    }
+
+    /**
+     * 从 User 实体和权限编码列表创建 UserDetails
+     */
+    public static UserDetailsImpl createWithAuthorities(User user, Set<String> authorityCodes) {
+        Set<GrantedAuthority> authorities = authorityCodes.stream()
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toSet());
 
         return new UserDetailsImpl(
                 user.getId(),

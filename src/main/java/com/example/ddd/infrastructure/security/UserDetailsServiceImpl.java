@@ -2,6 +2,7 @@ package com.example.ddd.infrastructure.security;
 
 import com.example.ddd.domain.model.entity.User;
 import com.example.ddd.domain.repository.UserRepository;
+import com.example.ddd.domain.repository.UserRoleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -9,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.Set;
 /**
  * Spring Security 用户详情服务实现
  *
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 public class UserDetailsServiceImpl implements UserDetailsService {
 
     private final UserRepository userRepository;
+    private final UserRoleRepository userRoleRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -37,9 +40,17 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             throw new UsernameNotFoundException("用户已被禁用: " + username);
         }
 
-        // TODO: 加载用户的角色和权限
-        // 后续可以从数据库加载用户的角色和权限信息
+        // 加载用户的角色和权限
+        Set<String> roleCodes = userRoleRepository.findRoleCodesByUserId(user.getId());
+        Set<String> permissionCodes = userRoleRepository.findPermissionCodesByUserId(user.getId());
 
-        return UserDetailsImpl.create(user);
+        // 合并角色和权限
+        Set<String> authorities = new java.util.HashSet<>();
+        authorities.addAll(roleCodes);
+        authorities.addAll(permissionCodes);
+
+        log.debug("用户 {} 的权限: {}", username, authorities);
+
+        return UserDetailsImpl.createWithAuthorities(user, authorities);
     }
 }
