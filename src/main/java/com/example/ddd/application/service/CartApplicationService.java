@@ -2,11 +2,17 @@ package com.example.ddd.application.service;
 
 import com.example.ddd.application.ApplicationService;
 import com.example.ddd.domain.model.entity.CartItem;
+import com.example.ddd.domain.model.entity.Product;
+import com.example.ddd.domain.model.entity.ProductSku;
+import com.example.ddd.domain.repository.ProductRepository;
+import com.example.ddd.domain.repository.ProductSkuRepository;
 import com.example.ddd.domain.service.CartDomainService;
+import com.example.ddd.interfaces.rest.vo.CartItemVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -20,6 +26,8 @@ import java.util.List;
 public class CartApplicationService extends ApplicationService {
 
     private final CartDomainService cartDomainService;
+    private final ProductSkuRepository productSkuRepository;
+    private final ProductRepository productRepository;
 
     /**
      * 添加商品到购物车
@@ -76,6 +84,36 @@ public class CartApplicationService extends ApplicationService {
         beforeExecute();
         try {
             return cartDomainService.getCartItems(userId);
+        } finally {
+            afterExecute();
+        }
+    }
+
+    /**
+     * 获取购物车列表（包含商品信息）
+     */
+    public List<CartItemVO> getCartItemsWithProductInfo(Long userId) {
+        beforeExecute();
+        try {
+            List<CartItem> cartItems = cartDomainService.getCartItems(userId);
+            List<CartItemVO> result = new ArrayList<>();
+
+            for (CartItem item : cartItems) {
+                // 获取SKU信息
+                ProductSku sku = productSkuRepository.findById(item.getSkuId());
+
+                // 获取商品信息
+                Product product = null;
+                if (sku != null) {
+                    product = productRepository.findById(sku.getProductId());
+                }
+
+                // 构建VO
+                CartItemVO vo = CartItemVO.from(item, sku, product);
+                result.add(vo);
+            }
+
+            return result;
         } finally {
             afterExecute();
         }

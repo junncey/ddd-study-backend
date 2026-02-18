@@ -71,12 +71,18 @@
   - 移除header-right区域重复的购物车图标
 - **测试验证**: ✅ MCP浏览器测试，角标显示正常无重复
 
-#### C-2: 订单确认页商品信息缺失
+#### C-2: 订单确认页商品信息缺失 ⏳代码已修改，待测试
 - **位置**: `frontend/src/pages/consumer/OrderCreate/index.tsx`
 - **现象**: 商品清单表格中缺少商品图片和名称
 - **原因**: CartItem接口未包含完整的商品信息
 - **影响**: 用户无法确认订单中的具体商品
 - **优先级**: P1
+- **解决方案**: 创建 CartItemVO 返回完整商品信息
+- **修改的文件**:
+  - `CartItemVO.java` - 新增 VO 类，包含商品名称、图片等字段
+  - `CartApplicationService.java` - 新增 getCartItemsWithProductInfo() 方法
+  - `CartController.java` - getMyCart() 改用 CartItemVO
+- **状态**: 代码已修改，但由于后端服务无法重启，待后续测试验证
 
 #### C-3: 搜索功能未实现
 - **位置**: `frontend/src/components/Layout/index.tsx`

@@ -5,6 +5,7 @@ import com.example.ddd.application.service.CartApplicationService;
 import com.example.ddd.domain.model.entity.CartItem;
 import com.example.ddd.infrastructure.security.SecurityUtil;
 import com.example.ddd.interfaces.rest.dto.AddToCartRequest;
+import com.example.ddd.interfaces.rest.vo.CartItemVO;
 import com.example.ddd.interfaces.rest.vo.Response;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -69,12 +70,12 @@ public class CartController {
     }
 
     /**
-     * 获取购物车列表
+     * 获取购物车列表（包含商品信息）
      */
     @GetMapping("/my")
-    public Response<List<CartItem>> getMyCart() {
+    public Response<List<CartItemVO>> getMyCart() {
         Long userId = SecurityUtil.getCurrentUserId();
-        List<CartItem> items = cartApplicationService.getCartItems(userId);
+        List<CartItemVO> items = cartApplicationService.getCartItemsWithProductInfo(userId);
         return Response.success(items);
     }
 }
