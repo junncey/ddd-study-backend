@@ -73,6 +73,18 @@ public class ProductRepositoryImpl implements ProductRepository {
     }
 
     @Override
+    public List<Product> findByCategoryIds(List<Long> categoryIds) {
+        if (categoryIds == null || categoryIds.isEmpty()) {
+            return List.of();
+        }
+        return productMapper.selectList(
+                new LambdaQueryWrapper<Product>()
+                        .in(Product::getCategoryId, categoryIds)
+                        .orderByDesc(Product::getCreateTime)
+        );
+    }
+
+    @Override
     public List<Product> findByStatus(ProductStatus status) {
         return productMapper.selectList(
                 new LambdaQueryWrapper<Product>()

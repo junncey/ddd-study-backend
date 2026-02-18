@@ -32,6 +32,14 @@ public interface ProductRepository extends BaseRepository<Product> {
     List<Product> findByCategoryId(Long categoryId);
 
     /**
+     * 根据多个分类ID查询商品
+     *
+     * @param categoryIds 分类ID列表
+     * @return 商品列表
+     */
+    List<Product> findByCategoryIds(List<Long> categoryIds);
+
+    /**
      * 根据状态查询商品
      *
      * @param status 状态

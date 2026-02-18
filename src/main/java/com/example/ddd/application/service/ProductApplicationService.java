@@ -3,12 +3,14 @@ package com.example.ddd.application.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.ddd.application.ApplicationService;
+import com.example.ddd.domain.model.entity.Category;
 import com.example.ddd.domain.model.entity.Product;
 import com.example.ddd.domain.model.entity.ProductImage;
 import com.example.ddd.domain.model.entity.ProductSku;
 import com.example.ddd.domain.model.valueobject.Money;
 import com.example.ddd.domain.model.valueobject.ProductStatus;
 import com.example.ddd.domain.model.valueobject.Quantity;
+import com.example.ddd.domain.repository.CategoryRepository;
 import com.example.ddd.domain.repository.ProductImageRepository;
 import com.example.ddd.domain.repository.ProductRepository;
 import com.example.ddd.domain.repository.ProductSkuRepository;
@@ -34,6 +36,7 @@ import java.util.List;
 public class ProductApplicationService extends ApplicationService {
 
     private final ProductDomainService productDomainService;
+    private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
     private final ProductSkuRepository productSkuRepository;
     private final ProductImageRepository productImageRepository;
@@ -186,17 +189,46 @@ public class ProductApplicationService extends ApplicationService {
     }
 
     /**
-     * 根据分类获取商品列表
+     * 根据分类获取商品列表（支持层级查询，包含子分类的商品）
      */
     public List<Product> getProductsByCategoryId(Long categoryId) {
         beforeExecute();
         try {
-            List<Product> products = productRepository.findByCategoryId(categoryId);
+            // 收集当前分类及所有子分类ID
+            List<Long> categoryIds = collectCategoryIds(categoryId);
+
+            List<Product> products = productRepository.findByCategoryIds(categoryIds);
             // 填充每个商品的价格和库存信息
             fillProductPriceAndStock(products);
             return products;
         } finally {
             afterExecute();
+        }
+    }
+
+    /**
+     * 递归收集分类及其所有子分类的ID
+     */
+    private List<Long> collectCategoryIds(Long categoryId) {
+        List<Long> ids = new java.util.ArrayList<>();
+        ids.add(categoryId);
+
+        // 递归获取所有子分类
+        collectChildCategoryIds(categoryId, ids);
+
+        return ids;
+    }
+
+    /**
+     * 递归收集子分类ID
+     */
+    private void collectChildCategoryIds(Long parentId, List<Long> ids) {
+        List<Category> children = categoryRepository.findByParentId(parentId);
+        if (children != null && !children.isEmpty()) {
+            for (Category child : children) {
+                ids.add(child.getId());
+                collectChildCategoryIds(child.getId(), ids);
+            }
         }
     }
 
