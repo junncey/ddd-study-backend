@@ -77,4 +77,16 @@ public class CartItemRepositoryImpl implements CartItemRepository {
                         .eq(CartItem::getCartId, cartId)
         );
     }
+
+    @Override
+    public int physicalDeleteByCartIdAndSkuId(Long cartId, Long skuId) {
+        // 使用原生SQL进行物理删除，绕过MyBatis-Plus的逻辑删除
+        return cartItemMapper.physicalDeleteByCartIdAndSkuId(cartId, skuId);
+    }
+
+    @Override
+    public int physicalDeleteById(Long id) {
+        // 使用原生SQL进行物理删除，绕过MyBatis-Plus的逻辑删除
+        return cartItemMapper.physicalDeleteById(id);
+    }
 }

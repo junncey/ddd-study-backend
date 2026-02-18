@@ -101,6 +101,7 @@ public class CartDomainService extends DomainService {
 
     /**
      * 删除购物车明细
+     * 使用物理删除，不使用逻辑删除
      *
      * @param cartItemId 购物车明细ID
      * @return 是否删除成功
@@ -108,7 +109,15 @@ public class CartDomainService extends DomainService {
     @Transactional(rollbackFor = Exception.class)
     public boolean removeItem(Long cartItemId) {
         validate();
-        return cartItemRepository.delete(cartItemId) > 0;
+
+        // 查找当前明细
+        CartItem cartItem = cartItemRepository.findById(cartItemId);
+        if (cartItem == null) {
+            return false;
+        }
+
+        // 使用物理删除，直接从数据库删除记录
+        return cartItemRepository.physicalDeleteById(cartItemId) > 0;
     }
 
     /**
