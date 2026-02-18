@@ -62,6 +62,9 @@ public class SecurityConfig {
             "/products/**",
             "/categories/**",
 
+            // 评价相关（公开查看）
+            "/reviews/product/**",
+
             // Druid 监控
             "/druid/**",
 

@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.EqualsAndHashCode;
 
+import java.util.List;
+
 /**
  * 评价实体
  *
@@ -65,6 +67,12 @@ public class Review extends BaseEntity {
      * 是否匿名
      */
     private Boolean isAnonymous;
+
+    /**
+     * 回复列表（非数据库字段）
+     */
+    @com.baomidou.mybatisplus.annotation.TableField(exist = false)
+    private List<ReviewReply> replies;
 
     /**
      * 获取是否匿名
