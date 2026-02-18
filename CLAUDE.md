@@ -201,9 +201,45 @@ git add .
 git commit -m "feat: 功能描述"
 ```
 
+### 代码修改后提交流程
+
+**重要规则**：代码修改完成后，必须按以下流程提交：
+
+1. **确认修改内容**：使用 `git status` 和 `git diff` 查看修改的文件和内容
+2. **分开提交**：前端和后端代码必须分别提交到各自的仓库
+3. **记录变更日志**：重要的修改（Bug 修复、新功能、重构等）需要在 `change_log/` 目录下创建日志文件
+4. **规范提交信息**：使用规范的 commit message 格式
+
+#### 完整提交流程示例
+
+```bash
+# 1. 查看修改状态
+git status
+git diff
+
+# 2. 添加文件（推荐指定具体文件，避免添加不需要的文件）
+git add src/main/java/com/example/ddd/domain/xxx.java
+
+# 3. 提交（包含变更说明和协作者标记）
+git commit -m "$(cat <<'EOF'
+fix: 简短描述修复的问题
+
+- 具体修改点1
+- 具体修改点2
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+EOF
+)"
+
+# 4. 确认提交成功
+git log -1
+```
+
 ### 注意事项
 
 1. 后端仓库的 `.gitignore` 已配置忽略 `frontend/` 目录
 2. 前端仓库是独立的 Git 仓库，有自己的 `.git`
 3. 不要在后端仓库中提交前端代码
+4. 提交前确保代码已通过编译/构建
+5. 重要修改需同步更新 `change_log/` 目录下的日志文件
 
