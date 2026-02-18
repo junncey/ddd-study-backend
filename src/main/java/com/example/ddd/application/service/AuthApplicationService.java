@@ -33,7 +33,7 @@ public class AuthApplicationService extends ApplicationService {
     private final JwtUtil jwtUtil;
     private final AuthDomainService authDomainService;
     private final LoginLogDomainService loginLogDomainService;
-    private final com.example.ddd.infrastructure.security.TokenBlacklistService tokenBlacklistService;
+    private final com.example.ddd.infrastructure.security.UserTokenService userTokenService;
 
     /**
      * 用户登录
@@ -60,6 +60,9 @@ public class AuthApplicationService extends ApplicationService {
             // 生成 Token
             String accessToken = jwtUtil.generateToken(username);
             String refreshToken = jwtUtil.generateRefreshToken(username);
+
+            // 存储用户当前 token（实现单点登录）
+            userTokenService.storeUserToken(username, accessToken);
 
             // 获取过期时间
             Long expiresIn = jwtUtil.getTokenRemainingTime(accessToken);
@@ -128,11 +131,6 @@ public class AuthApplicationService extends ApplicationService {
                 throw new IllegalArgumentException("刷新Token无效或已过期");
             }
 
-            // 检查 refresh token 是否在黑名单中
-            if (tokenBlacklistService.isRefreshTokenBlacklisted(refreshToken)) {
-                throw new IllegalArgumentException("刷新Token已失效");
-            }
-
             // 检查是否为 refresh token
             Claims claims = jwtUtil.getAllClaimsFromToken(refreshToken);
             String type = (String) claims.get("type");
@@ -143,12 +141,12 @@ public class AuthApplicationService extends ApplicationService {
             // 获取用户名
             String username = jwtUtil.getUsernameFromToken(refreshToken);
 
-            // 将旧的 refresh token 加入黑名单
-            tokenBlacklistService.addRefreshTokenToBlacklist(refreshToken);
-
             // 生成新的 access token 和 refresh token
             String newAccessToken = jwtUtil.generateToken(username);
             String newRefreshToken = jwtUtil.generateRefreshToken(username);
+
+            // 更新用户当前 token（实现单点登录）
+            userTokenService.storeUserToken(username, newAccessToken);
 
             Long expiresIn = jwtUtil.getTokenRemainingTime(newAccessToken);
 
@@ -169,21 +167,12 @@ public class AuthApplicationService extends ApplicationService {
      * 用户登出
      *
      * @param username 用户名
-     * @param accessToken access token
-     * @param refreshToken refresh token（可选）
      */
-    public void logout(String username, String accessToken, String refreshToken) {
+    public void logout(String username) {
         log.info("用户登出: {}", username);
 
-        // 将 access token 加入黑名单
-        if (accessToken != null && !accessToken.isBlank()) {
-            tokenBlacklistService.addToBlacklist(accessToken);
-        }
-
-        // 将 refresh token 加入黑名单
-        if (refreshToken != null && !refreshToken.isBlank()) {
-            tokenBlacklistService.addRefreshTokenToBlacklist(refreshToken);
-        }
+        // 删除用户当前 token
+        userTokenService.removeUserToken(username);
     }
 
     /**

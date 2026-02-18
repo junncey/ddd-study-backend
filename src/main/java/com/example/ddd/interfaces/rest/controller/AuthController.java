@@ -18,10 +18,8 @@ import com.example.ddd.interfaces.rest.vo.Response;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -148,24 +146,14 @@ public class AuthController {
      * 用户登出
      *
      * @param userDetails 当前用户详情
-     * @param request HTTP 请求（用于获取 Authorization 头）
      * @return 成功消息
      */
     @PostMapping("/logout")
-    public Response<Void> logout(@AuthenticationPrincipal UserDetailsImpl userDetails,
-                                 HttpServletRequest request) {
-        log.info("用户登出: {}", userDetails.getUsername());
-
-        // 从请求头获取 access token
-        String accessToken = null;
-        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (StringUtils.hasText(authHeader) && authHeader.startsWith("Bearer ")) {
-            accessToken = authHeader.substring(7);
+    public Response<Void> logout(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+        if (userDetails != null) {
+            log.info("用户登出: {}", userDetails.getUsername());
+            authApplicationService.logout(userDetails.getUsername());
         }
-
-        // 调用登出服务，使 token 失效
-        authApplicationService.logout(userDetails.getUsername(), accessToken, null);
-
         return Response.success();
     }
 

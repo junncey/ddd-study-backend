@@ -21,6 +21,7 @@ import java.io.IOException;
  * JWT 认证过滤器
  *
  * 从请求头中提取 JWT token，验证并设置用户认证信息
+ * 实现单点登录：检查 token 是否是用户当前有效的 token
  *
  * @author DDD Demo
  */
@@ -31,7 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
-    private final TokenBlacklistService tokenBlacklistService;
+    private final UserTokenService userTokenService;
 
     /**
      * JWT 请求头名称
@@ -53,14 +54,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             // 验证 token 并设置认证信息
             if (StringUtils.hasText(jwt) && jwtUtil.validateToken(jwt)) {
-                // 检查 token 是否在黑名单中
-                if (tokenBlacklistService.isBlacklisted(jwt)) {
-                    log.debug("Token 已失效（在黑名单中）");
+                // 从 token 中获取用户名
+                String username = jwtUtil.getUsernameFromToken(jwt);
+
+                // 检查 token 是否是用户当前有效的 token（单点登录）
+                if (!userTokenService.isCurrentValidToken(username, jwt)) {
+                    log.debug("Token 已失效（用户在其他地方登录）");
                     filterChain.doFilter(request, response);
                     return;
                 }
-                // 从 token 中获取用户名
-                String username = jwtUtil.getUsernameFromToken(jwt);
 
                 // 加载用户详情
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
