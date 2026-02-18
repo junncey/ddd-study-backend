@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.BlockAttackInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
+import com.example.ddd.infrastructure.security.UserDetailsImpl;
 import org.apache.ibatis.reflection.MetaObject;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Bean;
@@ -72,17 +73,17 @@ public class MybatisPlusConfig {
             /**
              * 获取当前用户
              * 从 Spring Security 安全上下文中获取当前登录用户
+             * 返回格式：用户ID-用户名，例如 "1-admin"
+             * 如果未获取到用户信息，则返回 "noLogin"
              */
             private String getCurrentUser() {
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-                if (authentication != null && authentication.isAuthenticated()) {
-                    // 如果是匿名用户或未认证，返回默认值
-                    if (authentication.getPrincipal() instanceof String) {
-                        return "noLogin";
-                    }
-                    // 返回当前登录用户名
-                    return authentication.getName();
+                if (authentication != null && authentication.isAuthenticated()
+                        && authentication.getPrincipal() instanceof UserDetailsImpl userDetails) {
+                    // 返回格式：用户ID-用户名
+                    return userDetails.getId() + "-" + userDetails.getUsername();
                 }
+                // 如果是匿名用户或未认证，返回默认值
                 return "noLogin";
             }
         };

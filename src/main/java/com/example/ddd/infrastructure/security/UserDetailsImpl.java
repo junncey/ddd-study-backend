@@ -1,8 +1,13 @@
 package com.example.ddd.infrastructure.security;
 
 import com.example.ddd.domain.model.entity.User;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,10 +20,14 @@ import java.util.stream.Collectors;
 /**
  * Spring Security 用户详情实现
  *
+ * 支持 Redis 缓存序列化/反序列化
+ *
  * @author DDD Demo
  */
 @Data
+@NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class UserDetailsImpl implements UserDetails {
 
     /**
@@ -32,8 +41,9 @@ public class UserDetailsImpl implements UserDetails {
     private String username;
 
     /**
-     * 密码
+     * 密码（JSON 序列化时忽略）
      */
+    @JsonIgnore
     private String password;
 
     /**
@@ -47,23 +57,45 @@ public class UserDetailsImpl implements UserDetails {
     private Integer status;
 
     /**
-     * 权限列表
+     * 权限编码列表（用于序列化）
+     * 注意：不使用 @JsonIgnore，而是使用自定义序列化方式
      */
-    private Set<GrantedAuthority> authorities;
+    private Set<String> authorityCodes;
+
+    /**
+     * 获取权限列表（实现 UserDetails 接口）
+     */
+    @JsonIgnore
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        if (authorityCodes == null || authorityCodes.isEmpty()) {
+            return Collections.emptySet();
+        }
+        return authorityCodes.stream()
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * 设置权限列表（用于反序列化后的处理）
+     */
+    public void setAuthorities(Set<GrantedAuthority> authorities) {
+        this.authorityCodes = authorities.stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toSet());
+    }
 
     /**
      * 从 User 实体创建 UserDetails
      */
     public static UserDetailsImpl create(User user) {
-        Set<GrantedAuthority> authorities = Collections.emptySet();
-
         return new UserDetailsImpl(
                 user.getId(),
                 user.getUsername(),
                 user.getPassword(),
                 user.getEmail() != null ? user.getEmail().getValue() : null,
                 user.getStatus() != null ? user.getStatus().getValue() : null,
-                authorities
+                Collections.emptySet()
         );
     }
 
@@ -71,8 +103,22 @@ public class UserDetailsImpl implements UserDetails {
      * 从 User 实体和权限编码列表创建 UserDetails
      */
     public static UserDetailsImpl createWithAuthorities(User user, Set<String> authorityCodes) {
-        Set<GrantedAuthority> authorities = authorityCodes.stream()
-                .map(SimpleGrantedAuthority::new)
+        return new UserDetailsImpl(
+                user.getId(),
+                user.getUsername(),
+                user.getPassword(),
+                user.getEmail() != null ? user.getEmail().getValue() : null,
+                user.getStatus() != null ? user.getStatus().getValue() : null,
+                authorityCodes
+        );
+    }
+
+    /**
+     * 从 User 实体和权限列表创建 UserDetails
+     */
+    public static UserDetailsImpl create(User user, Set<GrantedAuthority> authorities) {
+        Set<String> authorityCodes = authorities.stream()
+                .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toSet());
 
         return new UserDetailsImpl(
@@ -81,37 +127,8 @@ public class UserDetailsImpl implements UserDetails {
                 user.getPassword(),
                 user.getEmail() != null ? user.getEmail().getValue() : null,
                 user.getStatus() != null ? user.getStatus().getValue() : null,
-                authorities
+                authorityCodes
         );
-    }
-
-    /**
-     * 从 User 实体和权限列表创建 UserDetails
-     */
-    public static UserDetailsImpl create(User user, Set<GrantedAuthority> authorities) {
-        return new UserDetailsImpl(
-                user.getId(),
-                user.getUsername(),
-                user.getPassword(),
-                user.getEmail() != null ? user.getEmail().getValue() : null,
-                user.getStatus() != null ? user.getStatus().getValue() : null,
-                authorities
-        );
-    }
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return authorities;
-    }
-
-    @Override
-    public String getPassword() {
-        return password;
-    }
-
-    @Override
-    public String getUsername() {
-        return username;
     }
 
     @Override
@@ -132,12 +149,5 @@ public class UserDetailsImpl implements UserDetails {
     @Override
     public boolean isEnabled() {
         return status != null && status == 1;
-    }
-
-    /**
-     * 获取用户ID
-     */
-    public Long getId() {
-        return id;
     }
 }

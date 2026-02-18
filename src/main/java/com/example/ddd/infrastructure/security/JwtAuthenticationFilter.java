@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,12 +17,14 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * JWT 认证过滤器
  *
  * 从请求头中提取 JWT token，验证并设置用户认证信息
  * 实现单点登录：检查 token 是否是用户当前有效的 token
+ * 使用 Redis 缓存用户详情，降低数据库压力
  *
  * @author DDD Demo
  */
@@ -33,6 +36,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
     private final UserTokenService userTokenService;
+    private final RedisTemplate<String, Object> redisTemplate;
+
+    /**
+     * 用户详情缓存 key 前缀
+     */
+    private static final String USER_DETAILS_PREFIX = "user:details:";
+
+    /**
+     * 用户详情缓存过期时间（分钟）
+     */
+    private static final long CACHE_EXPIRE_MINUTES = 30;
 
     /**
      * JWT 请求头名称
@@ -64,8 +78,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     return;
                 }
 
-                // 加载用户详情
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                // 从缓存加载用户详情
+                UserDetails userDetails = getUserDetailsFromCache(username);
 
                 // 创建认证对象
                 UsernamePasswordAuthenticationToken authentication =
@@ -91,6 +105,54 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // 继续过滤器链
         filterChain.doFilter(request, response);
+    }
+
+    /**
+     * 从缓存加载用户详情
+     * 如果缓存未命中，则从数据库加载并缓存
+     *
+     * @param username 用户名
+     * @return 用户详情
+     */
+    private UserDetails getUserDetailsFromCache(String username) {
+        String cacheKey = USER_DETAILS_PREFIX + username;
+
+        try {
+            // 尝试从缓存获取
+            Object cached = redisTemplate.opsForValue().get(cacheKey);
+            if (cached instanceof UserDetailsImpl userDetails) {
+                log.debug("从缓存加载用户详情: {}", username);
+                return userDetails;
+            }
+        } catch (Exception e) {
+            log.warn("从缓存获取用户详情失败: {}", e.getMessage());
+        }
+
+        // 缓存未命中，从数据库加载
+        log.debug("从数据库加载用户详情: {}", username);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+        // 缓存用户详情
+        try {
+            long tokenRemainingTime = jwtUtil.getTokenRemainingTime(
+                    userTokenService.getUserToken(username)
+            );
+            // 缓存时间取 token 剩余时间和默认缓存时间的较小值
+            long cacheExpire = Math.min(tokenRemainingTime / 60, CACHE_EXPIRE_MINUTES);
+            if (cacheExpire > 0) {
+                redisTemplate.opsForValue().set(
+                        cacheKey,
+                        userDetails,
+                        cacheExpire,
+                        TimeUnit.MINUTES
+                );
+                log.debug("缓存用户详情: {}, 过期时间: {} 分钟", username, cacheExpire);
+            }
+        } catch (Exception e) {
+            log.warn("缓存用户详情失败: {}", e.getMessage());
+        }
+
+        return userDetails;
     }
 
     /**
