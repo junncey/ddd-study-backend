@@ -54,4 +54,13 @@ public interface CartItemRepository extends BaseRepository<CartItem> {
      * @return 影响行数
      */
     int physicalDeleteById(Long id);
+
+    /**
+     * 物理删除指定购物车的所有明细
+     * 用于清空购物车时避免逻辑删除的唯一约束冲突
+     *
+     * @param cartId 购物车ID
+     * @return 影响行数
+     */
+    int physicalDeleteByCartId(Long cartId);
 }

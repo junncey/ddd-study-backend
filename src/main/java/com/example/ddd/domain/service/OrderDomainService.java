@@ -101,10 +101,10 @@ public class OrderDomainService extends DomainService {
         // 8. 记录状态日志
         recordStatusLog(savedOrder.getId(), null, OrderStatus.PENDING.getValue(), "创建订单");
 
-        // 9. 清理购物车
+        // 9. 清理购物车（使用物理删除，避免逻辑删除导致的唯一约束冲突）
         if (cartItemIds != null && !cartItemIds.isEmpty()) {
             for (Long cartItemId : cartItemIds) {
-                cartItemRepository.delete(cartItemId);
+                cartItemRepository.physicalDeleteById(cartItemId);
             }
         }
 

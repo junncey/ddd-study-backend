@@ -32,4 +32,14 @@ public interface CartItemMapper extends BaseMapper<CartItem> {
      */
     @Delete("DELETE FROM t_cart_item WHERE id = #{id}")
     int physicalDeleteById(@Param("id") Long id);
+
+    /**
+     * 物理删除指定购物车的所有明细
+     * 用于清空购物车时避免逻辑删除的唯一约束冲突
+     *
+     * @param cartId 购物车ID
+     * @return 影响行数
+     */
+    @Delete("DELETE FROM t_cart_item WHERE cart_id = #{cartId}")
+    int physicalDeleteByCartId(@Param("cartId") Long cartId);
 }

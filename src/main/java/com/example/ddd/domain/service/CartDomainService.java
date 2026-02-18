@@ -122,6 +122,7 @@ public class CartDomainService extends DomainService {
 
     /**
      * 清空购物车
+     * 使用物理删除，避免逻辑删除导致的唯一约束冲突
      *
      * @param userId 用户ID
      */
@@ -131,7 +132,8 @@ public class CartDomainService extends DomainService {
 
         Cart cart = cartRepository.findByUserId(userId);
         if (cart != null) {
-            cartItemRepository.deleteByCartId(cart.getId());
+            // 使用物理删除，避免唯一约束冲突 (cart_id, sku_id, deleted)
+            cartItemRepository.physicalDeleteByCartId(cart.getId());
         }
     }
 
