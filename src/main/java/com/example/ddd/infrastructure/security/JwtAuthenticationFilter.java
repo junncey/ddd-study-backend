@@ -31,6 +31,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
+    private final TokenBlacklistService tokenBlacklistService;
 
     /**
      * JWT 请求头名称
@@ -52,6 +53,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             // 验证 token 并设置认证信息
             if (StringUtils.hasText(jwt) && jwtUtil.validateToken(jwt)) {
+                // 检查 token 是否在黑名单中
+                if (tokenBlacklistService.isBlacklisted(jwt)) {
+                    log.debug("Token 已失效（在黑名单中）");
+                    filterChain.doFilter(request, response);
+                    return;
+                }
                 // 从 token 中获取用户名
                 String username = jwtUtil.getUsernameFromToken(jwt);
 

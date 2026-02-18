@@ -33,6 +33,7 @@ public class AuthApplicationService extends ApplicationService {
     private final JwtUtil jwtUtil;
     private final AuthDomainService authDomainService;
     private final LoginLogDomainService loginLogDomainService;
+    private final com.example.ddd.infrastructure.security.TokenBlacklistService tokenBlacklistService;
 
     /**
      * 用户登录
@@ -127,6 +128,11 @@ public class AuthApplicationService extends ApplicationService {
                 throw new IllegalArgumentException("刷新Token无效或已过期");
             }
 
+            // 检查 refresh token 是否在黑名单中
+            if (tokenBlacklistService.isRefreshTokenBlacklisted(refreshToken)) {
+                throw new IllegalArgumentException("刷新Token已失效");
+            }
+
             // 检查是否为 refresh token
             Claims claims = jwtUtil.getAllClaimsFromToken(refreshToken);
             String type = (String) claims.get("type");
@@ -136,6 +142,9 @@ public class AuthApplicationService extends ApplicationService {
 
             // 获取用户名
             String username = jwtUtil.getUsernameFromToken(refreshToken);
+
+            // 将旧的 refresh token 加入黑名单
+            tokenBlacklistService.addRefreshTokenToBlacklist(refreshToken);
 
             // 生成新的 access token 和 refresh token
             String newAccessToken = jwtUtil.generateToken(username);
@@ -160,13 +169,21 @@ public class AuthApplicationService extends ApplicationService {
      * 用户登出
      *
      * @param username 用户名
+     * @param accessToken access token
+     * @param refreshToken refresh token（可选）
      */
-    public void logout(String username) {
+    public void logout(String username, String accessToken, String refreshToken) {
         log.info("用户登出: {}", username);
 
-        // JWT 是无状态的，登出操作通常由客户端处理（删除 token）
-        // 如果需要实现强制登出，可以使用 Redis 存储黑名单
-        // 这里只记录日志
+        // 将 access token 加入黑名单
+        if (accessToken != null && !accessToken.isBlank()) {
+            tokenBlacklistService.addToBlacklist(accessToken);
+        }
+
+        // 将 refresh token 加入黑名单
+        if (refreshToken != null && !refreshToken.isBlank()) {
+            tokenBlacklistService.addRefreshTokenToBlacklist(refreshToken);
+        }
     }
 
     /**
