@@ -31,7 +31,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 1. **编译验证**（必须）：确保代码能正常编译/构建
 2. **服务启动验证**（必须）：确保后端/前端能正常启动
-3. **功能测试**（必须）：使用浏览器或 API 工具验证核心功能
+3. **功能测试**（必须）：使用 MCP 浏览器工具模拟人工操作验证核心功能
 4. **记录测试结果**（必须）：在变更日志中记录测试情况
 
 ### 测试流程
@@ -40,9 +40,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - 后端：`mvn clean compile`
    - 前端：`npm run build`
 
-2. **功能测试**：启动服务，进行人工模拟测试
-   - 后端：`mvn spring-boot:run`（端口 8080）
-   - 前端：`npm run dev`（端口 5173）
+2. **功能测试**：使用 MCP 浏览器工具模拟人工操作进行完整测试
+   - 启动服务：`mvn spring-boot:run`（后端 8080）、`npm run dev`（前端 5173）
+   - 使用 MCP Chrome DevTools 工具打开浏览器访问 `http://localhost:5173`
+   - 执行完整业务流程测试（如：登录 → 浏览商品 → 加入购物车 → 创建订单 → 支付 → 查看订单）
+   - 验证状态转换、错误提示、界面响应等
 
 3. **测试场景**：根据修改的功能点，逐一验证
    - 正向流程：正常操作路径
@@ -60,7 +62,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 后端：运行正常 / 启动失败
 - 前端：运行正常 / 启动失败
 
-### 测试用例
+### MCP 浏览器测试
+使用 MCP Chrome DevTools 工具进行模拟人工操作测试：
+
+#### 测试流程
+1. 打开浏览器访问 http://localhost:5173
+2. 登录系统
+3. 浏览商品并添加到购物车
+4. 创建订单
+5. 支付订单
+6. 查看订单状态变化
+
+#### 测试用例
 | 用例 | 预期结果 | 实际结果 | 状态 |
 |------|---------|---------|------|
 | 用例1 | xxx | xxx | ✅/❌ |
