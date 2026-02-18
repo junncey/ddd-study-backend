@@ -58,3 +58,6 @@ Desktop.ini
 hs_err_pid*
 /.claude/
 /CLAUDE.md
+
+# Frontend (separate repository)
+frontend/
