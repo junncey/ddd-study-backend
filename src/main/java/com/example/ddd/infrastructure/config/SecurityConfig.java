@@ -44,7 +44,7 @@ public class SecurityConfig {
      * 允许的CORS来源（从环境变量配置）
      * 多个域名用逗号分隔，如：http://localhost:3000,https://example.com
      */
-    @Value("${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}")
+    @Value("${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173,http://localhost:5175,http://127.0.0.1:5175}")
     private String allowedOrigins;
 
     /**
@@ -57,6 +57,10 @@ public class SecurityConfig {
             "/auth/register",
             "/auth/refresh",
             "/auth/captcha",
+
+            // 商品相关（公开页面）
+            "/products/**",
+            "/categories/**",
 
             // Druid 监控
             "/druid/**",
