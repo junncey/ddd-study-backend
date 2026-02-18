@@ -91,6 +91,62 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 前端默认端口：5173
 - 数据库端口：3307
 
+## 服务启动前准备
+
+**重要规则**：启动新的服务前，**必须**先停止已运行的相关进程，避免端口冲突。
+
+### 检查端口占用
+
+```bash
+# Windows 检查端口占用
+netstat -ano | findstr :8080    # 检查后端端口
+netstat -ano | findstr :5173    # 检查前端端口
+
+# Linux/Mac 检查端口占用
+lsof -i :8080                   # 检查后端端口
+lsof -i :5173                   # 检查前端端口
+```
+
+### 停止已运行的服务
+
+**Windows**:
+```bash
+# 方法1：通过 taskkill 停止 Java 进程（后端）
+taskkill /F /IM java.exe
+
+# 方法2：通过 PID 停止（先通过 netstat 找到 PID）
+netstat -ano | findstr :8080    # 找到 PID（最后一列数字）
+taskkill /F /PID <PID>
+
+# 停止 Node.js 进程（前端）
+taskkill /F /IM node.exe
+```
+
+**Linux/Mac**:
+```bash
+# 停止后端服务
+pkill -f "spring-boot:run"
+# 或
+kill $(lsof -t -i:8080)
+
+# 停止前端服务
+pkill -f "vite"
+# 或
+kill $(lsof -t -i:5173)
+```
+
+### 一键停止脚本
+
+在启动服务前，建议先执行以下命令确保端口未被占用：
+
+```bash
+# Windows 一键停止
+taskkill /F /IM java.exe 2>nul; taskkill /F /IM node.exe 2>nul
+
+# Linux/Mac 一键停止
+pkill -f "spring-boot:run" 2>/dev/null; pkill -f "vite" 2>/dev/null
+```
+
 ## 项目概述
 
 基于领域驱动设计（DDD）的电商项目示例，采用六边形架构（Hexagonal Architecture）。
