@@ -5,6 +5,7 @@ import com.example.ddd.application.service.UserApplicationService;
 import com.example.ddd.domain.model.entity.User;
 import com.example.ddd.domain.model.valueobject.Status;
 import com.example.ddd.domain.model.valueobject.UserStatus;
+import com.example.ddd.infrastructure.security.SecurityUtil;
 import com.example.ddd.interfaces.rest.converter.UserConverter;
 import com.example.ddd.interfaces.rest.dto.UserCreateRequest;
 import com.example.ddd.interfaces.rest.dto.UserResponse;
@@ -16,6 +17,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 /**
  * 用户控制器
@@ -31,6 +34,41 @@ public class UserController {
 
     private final UserApplicationService userApplicationService;
     private final UserConverter userConverter;
+
+    /**
+     * 获取当前用户信息
+     */
+    @Operation(summary = "获取当前用户信息", description = "获取当前登录用户的个人信息")
+    @GetMapping("/me")
+    public Response<UserResponse> getCurrentUser() {
+        Long userId = SecurityUtil.getCurrentUserId();
+        User user = userApplicationService.getUserById(userId);
+        return Response.success(userConverter.toResponse(user));
+    }
+
+    /**
+     * 更新当前用户个人资料
+     */
+    @Operation(summary = "更新个人资料", description = "更新当前用户的昵称等信息")
+    @PutMapping("/me")
+    public Response<UserResponse> updateProfile(@RequestBody Map<String, String> updates) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        User user = userApplicationService.getUserById(userId);
+
+        // 更新允许修改的字段
+        if (updates.containsKey("nickname")) {
+            user.setNickname(updates.get("nickname"));
+        }
+        if (updates.containsKey("phone")) {
+            user.setPhoneString(updates.get("phone"));
+        }
+        if (updates.containsKey("email")) {
+            user.setEmailString(updates.get("email"));
+        }
+
+        User updatedUser = userApplicationService.updateUser(user);
+        return Response.success(userConverter.toResponse(updatedUser));
+    }
 
     /**
      * 创建用户
