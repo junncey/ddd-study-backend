@@ -140,9 +140,48 @@ public class ProductApplicationService extends ApplicationService {
     public List<Product> getProductsByShopId(Long shopId) {
         beforeExecute();
         try {
-            return productRepository.findByShopId(shopId);
+            List<Product> products = productRepository.findByShopId(shopId);
+            // 填充每个商品的价格和库存信息
+            fillProductPriceAndStock(products);
+            return products;
         } finally {
             afterExecute();
+        }
+    }
+
+    /**
+     * 填充商品的价格和库存信息（从SKU聚合）
+     */
+    private void fillProductPriceAndStock(List<Product> products) {
+        if (products == null || products.isEmpty()) {
+            log.info("fillProductPriceAndStock: products is null or empty");
+            return;
+        }
+        for (Product product : products) {
+            List<ProductSku> skus = productSkuRepository.findByProductId(product.getId());
+            log.info("fillProductPriceAndStock: productId={}, skuCount={}", product.getId(), skus != null ? skus.size() : 0);
+            if (skus != null && !skus.isEmpty()) {
+                // 计算最低价格
+                BigDecimal minPrice = skus.stream()
+                        .filter(sku -> sku.getPrice() != null)
+                        .map(sku -> sku.getPrice().getValue())
+                        .min(BigDecimal::compareTo)
+                        .orElse(BigDecimal.ZERO);
+                product.setMinPrice(minPrice);
+                log.info("fillProductPriceAndStock: set minPrice={} for productId={}", minPrice, product.getId());
+
+                // 计算总库存
+                int totalStock = skus.stream()
+                        .filter(sku -> sku.getStock() != null)
+                        .mapToInt(sku -> sku.getStock().getValue())
+                        .sum();
+                product.setTotalStock(totalStock);
+                log.info("fillProductPriceAndStock: set totalStock={} for productId={}", totalStock, product.getId());
+            } else {
+                product.setMinPrice(BigDecimal.ZERO);
+                product.setTotalStock(0);
+                log.info("fillProductPriceAndStock: no SKUs found for productId={}, setting defaults", product.getId());
+            }
         }
     }
 
@@ -152,7 +191,10 @@ public class ProductApplicationService extends ApplicationService {
     public List<Product> getProductsByCategoryId(Long categoryId) {
         beforeExecute();
         try {
-            return productRepository.findByCategoryId(categoryId);
+            List<Product> products = productRepository.findByCategoryId(categoryId);
+            // 填充每个商品的价格和库存信息
+            fillProductPriceAndStock(products);
+            return products;
         } finally {
             afterExecute();
         }
@@ -164,10 +206,15 @@ public class ProductApplicationService extends ApplicationService {
     public IPage<Product> pageProducts(Long current, Long size, Long shopId, Long categoryId, Integer status) {
         beforeExecute();
         try {
+            IPage<Product> page;
             if (shopId != null) {
-                return productRepository.pageByShopId(new Page<>(current, size), shopId);
+                page = productRepository.pageByShopId(new Page<>(current, size), shopId);
+            } else {
+                page = productRepository.pageOnSale(new Page<>(current, size));
             }
-            return productRepository.pageOnSale(new Page<>(current, size));
+            // 填充每个商品的价格和库存信息
+            fillProductPriceAndStock(page.getRecords());
+            return page;
         } finally {
             afterExecute();
         }

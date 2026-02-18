@@ -8,10 +8,12 @@ import com.example.ddd.interfaces.rest.dto.PermissionResponse;
 import com.example.ddd.interfaces.rest.dto.PermissionUpdateRequest;
 import com.example.ddd.interfaces.rest.vo.Response;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,13 +21,15 @@ import java.util.List;
 /**
  * 权限控制器
  * 六边形架构的主适配器（Driving Adapter）
+ * 所有权限管理操作仅限管理员
  *
  * @author DDD Demo
  */
-@Tag(name = "权限管理", description = "权限相关接口")
+@Tag(name = "权限管理", description = "权限相关接口（仅管理员）")
 @RestController
 @RequestMapping("/permissions")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
 public class PermissionController {
 
     private final PermissionApplicationService permissionApplicationService;
@@ -37,6 +41,7 @@ public class PermissionController {
      * @return 权限响应
      */
     @Operation(summary = "创建权限")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public Response<PermissionResponse> create(@Valid @RequestBody PermissionCreateRequest request) {
         Permission permission = new Permission();
@@ -53,6 +58,7 @@ public class PermissionController {
      * @return 权限响应
      */
     @Operation(summary = "更新权限")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping
     public Response<PermissionResponse> update(@Valid @RequestBody PermissionUpdateRequest request) {
         Permission permission = new Permission();
@@ -69,6 +75,7 @@ public class PermissionController {
      * @return 成功响应
      */
     @Operation(summary = "删除权限")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public Response<Void> delete(@PathVariable Long id) {
         permissionApplicationService.deletePermission(id);
@@ -82,6 +89,7 @@ public class PermissionController {
      * @return 权限响应
      */
     @Operation(summary = "查询权限")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public Response<PermissionResponse> getById(@PathVariable Long id) {
         Permission permission = permissionApplicationService.getPermissionById(id);
@@ -95,6 +103,7 @@ public class PermissionController {
      * @return 权限响应
      */
     @Operation(summary = "根据权限编码查询权限")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/code/{permissionCode}")
     public Response<PermissionResponse> getByPermissionCode(@PathVariable String permissionCode) {
         Permission permission = permissionApplicationService.getPermissionByPermissionCode(permissionCode);
@@ -109,6 +118,7 @@ public class PermissionController {
      * @return 分页响应
      */
     @Operation(summary = "分页查询权限")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/page")
     public Response<IPage<PermissionResponse>> page(
             @RequestParam(defaultValue = "1") Long current,
@@ -126,6 +136,7 @@ public class PermissionController {
      * @return 权限树响应
      */
     @Operation(summary = "查询权限树")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/tree")
     public Response<List<PermissionResponse>> tree() {
         List<Permission> tree = permissionApplicationService.getPermissionTree();
@@ -142,6 +153,7 @@ public class PermissionController {
      * @return 子权限列表
      */
     @Operation(summary = "根据父权限ID查询子权限")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/children/{parentId}")
     public Response<List<PermissionResponse>> getChildrenByParentId(@PathVariable Long parentId) {
         List<Permission> permissions = permissionApplicationService.getPermissionsByParentId(parentId);
@@ -158,6 +170,7 @@ public class PermissionController {
      * @return 权限列表
      */
     @Operation(summary = "根据权限类型查询权限")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/type/{permissionType}")
     public Response<List<PermissionResponse>> getByType(@PathVariable Integer permissionType) {
         List<Permission> permissions = permissionApplicationService.getPermissionsByType(permissionType);

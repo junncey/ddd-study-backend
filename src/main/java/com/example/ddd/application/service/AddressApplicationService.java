@@ -32,14 +32,15 @@ public class AddressApplicationService extends ApplicationService {
     /**
      * 创建地址用例
      *
+     * @param userId  用户ID（从认证上下文获取）
      * @param request 创建请求
      * @return 地址响应
      */
-    public AddressResponse createAddress(AddressCreateRequest request) {
+    public AddressResponse createAddress(Long userId, AddressCreateRequest request) {
         beforeExecute();
         try {
             Address address = new Address();
-            address.setUserId(Long.parseLong(request.getUserId()));
+            address.setUserId(userId);
             address.setReceiverName(request.getReceiverName());
             address.setReceiverPhone(request.getReceiverPhone());
             address.setProvince(request.getProvince());
@@ -58,15 +59,16 @@ public class AddressApplicationService extends ApplicationService {
     /**
      * 更新地址用例
      *
+     * @param userId  用户ID（从认证上下文获取）
      * @param request 更新请求
      * @return 地址响应
      */
-    public AddressResponse updateAddress(AddressUpdateRequest request) {
+    public AddressResponse updateAddress(Long userId, AddressUpdateRequest request) {
         beforeExecute();
         try {
             Address address = new Address();
             address.setId(request.getId());
-            address.setUserId(request.getUserId());
+            address.setUserId(userId);
             address.setReceiverName(request.getReceiverName());
             address.setReceiverPhone(request.getReceiverPhone());
             address.setProvince(request.getProvince());

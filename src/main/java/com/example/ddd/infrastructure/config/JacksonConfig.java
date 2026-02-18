@@ -4,7 +4,9 @@ import com.example.ddd.domain.model.valueobject.Email;
 import com.example.ddd.domain.model.valueobject.PhoneNumber;
 import com.example.ddd.domain.model.valueobject.Status;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -22,6 +24,11 @@ public class JacksonConfig {
     @Primary
     public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();
+
+        // 注册 Java 8 时间模块
+        mapper.registerModule(new JavaTimeModule());
+        // 禁用将日期写为时间戳
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
         // 注册自定义模块
         SimpleModule module = new SimpleModule();

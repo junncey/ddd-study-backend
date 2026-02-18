@@ -10,8 +10,11 @@ import com.example.ddd.interfaces.rest.dto.UserCreateRequest;
 import com.example.ddd.interfaces.rest.dto.UserResponse;
 import com.example.ddd.interfaces.rest.dto.UserUpdateRequest;
 import com.example.ddd.interfaces.rest.vo.Response;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -23,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
 public class UserController {
 
     private final UserApplicationService userApplicationService;
@@ -34,6 +38,8 @@ public class UserController {
      * @param request 创建请求
      * @return 用户响应
      */
+    @Operation(summary = "创建用户", description = "管理员创建新用户")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public Response<UserResponse> create(@Valid @RequestBody UserCreateRequest request) {
         User user = userConverter.toEntity(request);
@@ -52,6 +58,8 @@ public class UserController {
      * @param request 更新请求
      * @return 用户响应
      */
+    @Operation(summary = "更新用户", description = "管理员更新用户信息")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping
     public Response<UserResponse> update(@Valid @RequestBody UserUpdateRequest request) {
         User user = userConverter.toEntity(request);
@@ -66,6 +74,8 @@ public class UserController {
      * @param id 用户ID
      * @return 成功响应
      */
+    @Operation(summary = "删除用户", description = "管理员删除用户")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public Response<Void> delete(@PathVariable Long id) {
         userApplicationService.deleteUser(id);
@@ -78,6 +88,8 @@ public class UserController {
      * @param id 用户ID
      * @return 用户响应
      */
+    @Operation(summary = "查询用户", description = "根据ID查询用户信息")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping("/{id}")
     public Response<UserResponse> getById(@PathVariable Long id) {
         User user = userApplicationService.getUserById(id);
@@ -90,6 +102,8 @@ public class UserController {
      * @param username 用户名
      * @return 用户响应
      */
+    @Operation(summary = "根据用户名查询用户", description = "根据用户名查询用户信息")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping("/username/{username}")
     public Response<UserResponse> getByUsername(@PathVariable String username) {
         User user = userApplicationService.getUserByUsername(username);
@@ -103,6 +117,8 @@ public class UserController {
      * @param size    每页大小
      * @return 分页响应
      */
+    @Operation(summary = "分页查询用户", description = "管理员分页查询用户列表")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/page")
     public Response<IPage<UserResponse>> page(
             @RequestParam(defaultValue = "1") Long current,

@@ -20,6 +20,33 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     /**
+     * 处理权限不足异常
+     */
+    @ExceptionHandler(ForbiddenException.class)
+    public Response<?> handleForbiddenException(ForbiddenException e) {
+        log.warn("权限不足: {}", e.getMessage());
+        return Response.fail(e.getCode(), e.getMessage());
+    }
+
+    /**
+     * 处理未认证异常
+     */
+    @ExceptionHandler(UnauthorizedException.class)
+    public Response<?> handleUnauthorizedException(UnauthorizedException e) {
+        log.warn("未认证: {}", e.getMessage());
+        return Response.fail(e.getCode(), e.getMessage());
+    }
+
+    /**
+     * 处理资源不存在异常
+     */
+    @ExceptionHandler(NotFoundException.class)
+    public Response<?> handleNotFoundException(NotFoundException e) {
+        log.warn("资源不存在: {}", e.getMessage());
+        return Response.fail(e.getCode(), e.getMessage());
+    }
+
+    /**
      * 处理业务异常
      */
     @ExceptionHandler(BusinessException.class)

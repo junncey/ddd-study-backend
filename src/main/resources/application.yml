@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
   servlet:
     context-path: /api
 
@@ -11,9 +11,10 @@ spring:
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3307/ddd_demo?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
-    username: root
-    password: root
+    # 注意：生产环境请启用SSL (useSSL=true) 并配置证书
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3307}/${DB_NAME:ddd_demo}?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=${DB_SSL:false}&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
     druid:
       initial-size: 10
       min-idle: 10
@@ -35,19 +36,19 @@ spring:
         url-pattern: /*
         exclusions: "*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*"
       stat-view-servlet:
-        enabled: true
+        enabled: ${DRUID_MONITOR_ENABLED:false}
         url-pattern: /druid/*
         reset-enable: false
-        login-username: admin
-        login-password: admin
+        login-username: ${DRUID_USERNAME:admin}
+        login-password: ${DRUID_PASSWORD:}
 
   # Redis 配置
   data:
     redis:
-      host: localhost
-      port: 6379
-      password:
-      database: 0
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
       timeout: 10000ms
       lettuce:
         pool:
@@ -66,17 +67,20 @@ spring:
 
 # JWT 配置
 jwt:
-  # JWT 密钥（生产环境请使用更复杂的密钥）
-  secret: ddd-demo-jwt-secret-key-2024-spring-boot-security
+  # JWT 密钥（生产环境必须通过环境变量配置，禁止使用默认值）
+  # 生成密钥命令: openssl rand -base64 64
+  # 开发环境使用默认密钥，生产环境必须设置 JWT_SECRET 环境变量
+  secret: ${JWT_SECRET:devSecretKeyForTestingPurposesOnlyPleaseReplaceInProductionEnvironment1234567890}
   # Token 有效期（毫秒）默认 7 天
-  expiration: 604800000
+  expiration: ${JWT_EXPIRATION:604800000}
   # Refresh Token 有效期（毫秒）默认 30 天
-  refresh-expiration: 2592000000
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:2592000000}
 
 # MyBatis Plus 配置
 mybatis-plus:
   mapper-locations: classpath*:mapper/**/*Mapper.xml
   type-aliases-package: com.example.ddd.domain.model.entity
+  type-handlers-package: com.example.ddd.infrastructure.persistence.handler
   configuration:
     map-underscore-to-camel-case: true
     cache-enabled: false
@@ -115,7 +119,7 @@ springdoc:
       paths-to-match: /**
       packages-to-scan: com.example.ddd.interfaces.rest.controller
   # 是否启用（生产环境建议关闭）
-  enable: true
+  enable: ${SWAGGER_ENABLED:false}
   # 是否允许转换 URL
   allow-url-with-spaces: true
 

@@ -57,8 +57,7 @@ public class IpUtil {
         }
 
         // 5. 检查 HTTP_X_FORWARDED_FOR
-        ip = request.getHeader("HTTP_X_FORWARDED_FOR");
-        if (isValidIp(ip)) {
+        ip = request.getHeader("HTTP_X_FORWARDED_FOR");if (isValidIp(ip)) {
             return ip;
         }
 

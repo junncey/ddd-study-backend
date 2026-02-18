@@ -1,5 +1,6 @@
 package com.example.ddd.interfaces.rest.dto.auth;
 
+import com.example.ddd.infrastructure.validation.StrongPassword;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -26,7 +27,7 @@ public class RegisterRequest {
      * 密码
      */
     @NotBlank(message = "密码不能为空")
-    @Size(min = 6, max = 20, message = "密码长度必须在6-20之间")
+    @StrongPassword
     private String password;
 
     /**

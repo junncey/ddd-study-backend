@@ -9,6 +9,7 @@ import com.example.ddd.domain.model.valueobject.UserStatus;
 import com.example.ddd.infrastructure.persistence.handler.EmailTypeHandler;
 import com.example.ddd.infrastructure.persistence.handler.PhoneNumberTypeHandler;
 import com.example.ddd.infrastructure.persistence.handler.UserStatusTypeHandler;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.EqualsAndHashCode;
@@ -30,8 +31,9 @@ public class User extends BaseEntity {
     private String username;
 
     /**
-     * 密码
+     * 密码（序列化时忽略，防止泄露）
      */
+    @JsonIgnore
     private String password;
 
     /**

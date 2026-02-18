@@ -4,6 +4,7 @@ import com.example.ddd.infrastructure.security.JwtAccessDeniedHandler;
 import com.example.ddd.infrastructure.security.JwtAuthenticationEntryPoint;
 import com.example.ddd.infrastructure.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -38,6 +39,13 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
+
+    /**
+     * 允许的CORS来源（从环境变量配置）
+     * 多个域名用逗号分隔，如：http://localhost:3000,https://example.com
+     */
+    @Value("${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}")
+    private String allowedOrigins;
 
     /**
      * 公开的 API 端点，不需要认证
@@ -88,11 +96,12 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // 允许的源
-        configuration.setAllowedOriginPatterns(List.of("*"));
+        // 允许的源（从环境变量读取，生产环境必须配置具体域名）
+        List<String> origins = Arrays.asList(allowedOrigins.split(","));
+        configuration.setAllowedOriginPatterns(origins);
 
         // 允许的方法
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
 
         // 允许的请求头
         configuration.setAllowedHeaders(List.of("*"));

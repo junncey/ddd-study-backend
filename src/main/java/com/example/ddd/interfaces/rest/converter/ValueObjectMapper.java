@@ -7,6 +7,7 @@ import com.example.ddd.domain.model.valueobject.PhoneNumber;
 import com.example.ddd.domain.model.valueobject.RoleStatus;
 import com.example.ddd.domain.model.valueobject.Status;
 import com.example.ddd.domain.model.valueobject.UserStatus;
+import org.mapstruct.Mapper;
 import org.mapstruct.Named;
 
 /**
@@ -15,6 +16,7 @@ import org.mapstruct.Named;
  *
  * @author DDD Demo
  */
+@Mapper(componentModel = "spring")
 public interface ValueObjectMapper {
 
     // ========== Email 转换 ==========

@@ -2,6 +2,8 @@ package com.example.ddd.interfaces.rest.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.example.ddd.application.service.AddressApplicationService;
+import com.example.ddd.application.service.AuthorizationService;
+import com.example.ddd.infrastructure.security.SecurityUtil;
 import com.example.ddd.interfaces.rest.dto.AddressCreateRequest;
 import com.example.ddd.interfaces.rest.dto.AddressResponse;
 import com.example.ddd.interfaces.rest.dto.AddressUpdateRequest;
@@ -24,6 +26,7 @@ import java.util.List;
 public class AddressController {
 
     private final AddressApplicationService addressApplicationService;
+    private final AuthorizationService authorizationService;
 
     /**
      * 创建地址
@@ -33,7 +36,8 @@ public class AddressController {
      */
     @PostMapping
     public Response<AddressResponse> create(@Valid @RequestBody AddressCreateRequest request) {
-        AddressResponse response = addressApplicationService.createAddress(request);
+        Long userId = SecurityUtil.getCurrentUserId();
+        AddressResponse response = addressApplicationService.createAddress(userId, request);
         return Response.success(response);
     }
 
@@ -45,7 +49,10 @@ public class AddressController {
      */
     @PutMapping
     public Response<AddressResponse> update(@Valid @RequestBody AddressUpdateRequest request) {
-        AddressResponse response = addressApplicationService.updateAddress(request);
+        Long userId = SecurityUtil.getCurrentUserId();
+        // 验证地址归属
+        authorizationService.checkAddressOwnership(request.getId());
+        AddressResponse response = addressApplicationService.updateAddress(userId, request);
         return Response.success(response);
     }
 
@@ -56,7 +63,10 @@ public class AddressController {
      * @return 成功响应
      */
     @DeleteMapping("/{id}")
-    public Response<Void> delete(@PathVariable Long id, @RequestHeader("X-User-Id") Long userId) {
+    public Response<Void> delete(@PathVariable Long id) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        // 验证地址归属
+        authorizationService.checkAddressOwnership(id);
         addressApplicationService.deleteAddress(id, userId);
         return Response.success();
     }
@@ -69,6 +79,8 @@ public class AddressController {
      */
     @GetMapping("/{id}")
     public Response<AddressResponse> getById(@PathVariable Long id) {
+        // 验证地址归属
+        authorizationService.checkAddressOwnership(id);
         AddressResponse response = addressApplicationService.getAddressById(id);
         return Response.success(response);
     }
@@ -76,11 +88,11 @@ public class AddressController {
     /**
      * 查询我的所有地址
      *
-     * @param userId 用户ID（从请求头获取）
      * @return 地址列表
      */
     @GetMapping("/my")
-    public Response<List<AddressResponse>> getMyAddresses(@RequestHeader("X-User-Id") Long userId) {
+    public Response<List<AddressResponse>> getMyAddresses() {
+        Long userId = SecurityUtil.getCurrentUserId();
         List<AddressResponse> responses = addressApplicationService.getAddressesByUserId(userId);
         return Response.success(responses);
     }
@@ -88,11 +100,11 @@ public class AddressController {
     /**
      * 查询我的默认地址
      *
-     * @param userId 用户ID（从请求头获取）
      * @return 地址响应
      */
     @GetMapping("/my/default")
-    public Response<AddressResponse> getMyDefaultAddress(@RequestHeader("X-User-Id") Long userId) {
+    public Response<AddressResponse> getMyDefaultAddress() {
+        Long userId = SecurityUtil.getCurrentUserId();
         AddressResponse response = addressApplicationService.getDefaultAddress(userId);
         return Response.success(response);
     }
@@ -104,7 +116,10 @@ public class AddressController {
      * @return 地址响应
      */
     @PutMapping("/{id}/default")
-    public Response<AddressResponse> setDefault(@PathVariable Long id, @RequestHeader("X-User-Id") Long userId) {
+    public Response<AddressResponse> setDefault(@PathVariable Long id) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        // 验证地址归属
+        authorizationService.checkAddressOwnership(id);
         AddressResponse response = addressApplicationService.setDefaultAddress(id, userId);
         return Response.success(response);
     }
@@ -114,14 +129,13 @@ public class AddressController {
      *
      * @param current 当前页
      * @param size    每页大小
-     * @param userId   用户ID（从请求头获取）
      * @return 分页响应
      */
     @GetMapping("/page")
     public Response<IPage<AddressResponse>> pageMyAddresses(
             @RequestParam(defaultValue = "1") Long current,
-            @RequestParam(defaultValue = "10") Long size,
-            @RequestHeader("X-User-Id") Long userId) {
+            @RequestParam(defaultValue = "10") Long size) {
+        Long userId = SecurityUtil.getCurrentUserId();
         IPage<AddressResponse> page = addressApplicationService.pageAddressesByUserId(current, size, userId);
         return Response.success(page);
     }

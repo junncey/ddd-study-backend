@@ -3,14 +3,25 @@ package com.example.ddd.application.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.ddd.application.ApplicationService;
+import com.example.ddd.domain.model.entity.Address;
+import com.example.ddd.domain.model.entity.CartItem;
 import com.example.ddd.domain.model.entity.Order;
 import com.example.ddd.domain.model.entity.OrderItem;
+import com.example.ddd.domain.model.entity.ProductSku;
+import com.example.ddd.domain.model.valueobject.Money;
+import com.example.ddd.domain.repository.AddressRepository;
+import com.example.ddd.domain.repository.CartItemRepository;
+import com.example.ddd.domain.repository.OrderItemRepository;
 import com.example.ddd.domain.repository.OrderRepository;
+import com.example.ddd.domain.repository.ProductSkuRepository;
 import com.example.ddd.domain.service.OrderDomainService;
+import com.example.ddd.interfaces.rest.dto.OrderCreateRequest;
+import com.example.ddd.interfaces.rest.vo.OrderDetailVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -25,6 +36,79 @@ public class OrderApplicationService extends ApplicationService {
 
     private final OrderDomainService orderDomainService;
     private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final CartItemRepository cartItemRepository;
+    private final AddressRepository addressRepository;
+    private final ProductSkuRepository productSkuRepository;
+
+    /**
+     * 从请求创建订单
+     */
+    public Order createOrderFromRequest(Long userId, OrderCreateRequest request) {
+        beforeExecute();
+        try {
+            // 获取收货地址
+            Address address = addressRepository.findById(request.getAddressId());
+            if (address == null) {
+                throw new RuntimeException("收货地址不存在");
+            }
+
+            // 获取购物车项
+            List<CartItem> cartItems = new ArrayList<>();
+            for (Long cartItemId : request.getCartItemIds()) {
+                CartItem item = cartItemRepository.findById(cartItemId);
+                if (item != null) {
+                    cartItems.add(item);
+                }
+            }
+
+            if (cartItems.isEmpty()) {
+                throw new RuntimeException("购物车为空");
+            }
+
+            // 创建订单
+            Order order = new Order();
+            order.setUserId(userId);
+            order.setShopId(1L); // 默认店铺
+            order.setReceiverName(address.getReceiverName());
+            order.setReceiverPhone(address.getReceiverPhone());
+            order.setReceiverAddress(address.getFullAddress());
+            order.setRemark(request.getRemark());
+
+            // 创建订单项
+            List<OrderItem> orderItems = new ArrayList<>();
+            for (CartItem cartItem : cartItems) {
+                // 从SKU获取商品信息
+                ProductSku sku = productSkuRepository.findById(cartItem.getSkuId());
+                if (sku == null) {
+                    throw new RuntimeException("SKU不存在: " + cartItem.getSkuId());
+                }
+
+                OrderItem orderItem = new OrderItem();
+                orderItem.setProductId(sku.getProductId());
+                orderItem.setSkuId(cartItem.getSkuId());
+                orderItem.setSkuName(sku.getSkuName() != null ? sku.getSkuName() : "默认规格");
+                orderItem.setQuantity(cartItem.getQuantity());
+                orderItem.setPrice(cartItem.getPriceSnapshot());
+                orderItem.calculateTotalAmount();
+                orderItems.add(orderItem);
+            }
+
+            // 计算订单总金额
+            Money totalAmount = Money.zero();
+            for (CartItem item : cartItems) {
+                Money price = item.getPriceSnapshot();
+                if (price != null) {
+                    totalAmount = totalAmount.add(price.multiply(item.getQuantity()));
+                }
+            }
+            order.setTotalAmount(totalAmount);
+
+            return orderDomainService.createOrder(order, orderItems, request.getCartItemIds());
+        } finally {
+            afterExecute();
+        }
+    }
 
     /**
      * 创建订单
@@ -93,6 +177,23 @@ public class OrderApplicationService extends ApplicationService {
         beforeExecute();
         try {
             return orderRepository.findById(orderId);
+        } finally {
+            afterExecute();
+        }
+    }
+
+    /**
+     * 获取订单详情（包含订单项）
+     */
+    public OrderDetailVO getOrderDetailById(Long orderId) {
+        beforeExecute();
+        try {
+            Order order = orderRepository.findById(orderId);
+            if (order == null) {
+                return null;
+            }
+            List<OrderItem> items = orderItemRepository.findByOrderId(orderId);
+            return OrderDetailVO.from(order, items);
         } finally {
             afterExecute();
         }

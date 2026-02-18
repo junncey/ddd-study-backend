@@ -13,12 +13,6 @@ import lombok.Data;
 public class AddressCreateRequest {
 
     /**
-     * 用户ID
-     */
-    @NotBlank(message = "用户ID不能为空")
-    private String userId;
-
-    /**
      * 收货人姓名
      */
     @NotBlank(message = "收货人姓名不能为空")

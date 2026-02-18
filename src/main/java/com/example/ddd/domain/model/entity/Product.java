@@ -10,6 +10,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.EqualsAndHashCode;
 
+import java.math.BigDecimal;
+
 /**
  * 商品实体
  *
@@ -51,6 +53,26 @@ public class Product extends BaseEntity {
      */
     @TableField(typeHandler = ProductStatusTypeHandler.class)
     private ProductStatus status;
+
+    // ==================== 非持久化字段（用于前端显示）====================
+
+    /**
+     * 最低价格（从SKU聚合，非持久化）
+     */
+    @TableField(exist = false)
+    private BigDecimal minPrice;
+
+    /**
+     * 总库存（从SKU聚合，非持久化）
+     */
+    @TableField(exist = false)
+    private Integer totalStock;
+
+    /**
+     * 分类名称（非持久化，用于显示）
+     */
+    @TableField(exist = false)
+    private String categoryName;
 
     /**
      * 获取状态值

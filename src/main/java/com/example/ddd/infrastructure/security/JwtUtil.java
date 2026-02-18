@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -27,7 +28,7 @@ public class JwtUtil {
     /**
      * JWT 密钥
      */
-    @Value("${jwt.secret:ddd-demo-jwt-secret-key-2024}")
+    @Value("${jwt.secret:}")
     private String secret;
 
     /**
@@ -41,6 +42,21 @@ public class JwtUtil {
      */
     @Value("${jwt.refresh-expiration:2592000000}")
     private Long refreshExpiration;
+
+    /**
+     * 初始化时验证JWT密钥配置
+     */
+    @PostConstruct
+    public void init() {
+        if (secret == null || secret.isBlank()) {
+            log.error("JWT密钥未配置！请设置环境变量 JWT_SECRET 或配置 jwt.secret");
+            throw new IllegalStateException("JWT密钥未配置，请设置环境变量 JWT_SECRET");
+        }
+        if (secret.length() < 64) {
+            log.warn("JWT密钥长度不足64字节，建议使用更长的密钥以提高安全性");
+        }
+        log.info("JWT工具类初始化完成");
+    }
 
     /**
      * 生成密钥

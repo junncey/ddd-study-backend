@@ -8,22 +8,26 @@ import com.example.ddd.interfaces.rest.dto.RoleResponse;
 import com.example.ddd.interfaces.rest.dto.RoleUpdateRequest;
 import com.example.ddd.interfaces.rest.vo.Response;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
  * 角色控制器
  * 六边形架构的主适配器（Driving Adapter）
+ * 所有角色管理操作仅限管理员
  *
  * @author DDD Demo
  */
-@Tag(name = "角色管理", description = "角色相关接口")
+@Tag(name = "角色管理", description = "角色相关接口（仅管理员）")
 @RestController
 @RequestMapping("/roles")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
 public class RoleController {
 
     private final RoleApplicationService roleApplicationService;
@@ -35,6 +39,7 @@ public class RoleController {
      * @return 角色响应
      */
     @Operation(summary = "创建角色")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public Response<RoleResponse> create(@Valid @RequestBody RoleCreateRequest request) {
         Role role = new Role();
@@ -51,6 +56,7 @@ public class RoleController {
      * @return 角色响应
      */
     @Operation(summary = "更新角色")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping
     public Response<RoleResponse> update(@Valid @RequestBody RoleUpdateRequest request) {
         Role role = new Role();
@@ -67,6 +73,7 @@ public class RoleController {
      * @return 成功响应
      */
     @Operation(summary = "删除角色")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public Response<Void> delete(@PathVariable Long id) {
         roleApplicationService.deleteRole(id);
@@ -80,6 +87,7 @@ public class RoleController {
      * @return 角色响应
      */
     @Operation(summary = "查询角色")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public Response<RoleResponse> getById(@PathVariable Long id) {
         Role role = roleApplicationService.getRoleById(id);
@@ -93,6 +101,7 @@ public class RoleController {
      * @return 角色响应
      */
     @Operation(summary = "根据角色编码查询角色")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/code/{roleCode}")
     public Response<RoleResponse> getByRoleCode(@PathVariable String roleCode) {
         Role role = roleApplicationService.getRoleByRoleCode(roleCode);
@@ -107,6 +116,7 @@ public class RoleController {
      * @return 分页响应
      */
     @Operation(summary = "分页查询角色")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/page")
     public Response<IPage<RoleResponse>> page(
             @RequestParam(defaultValue = "1") Long current,
