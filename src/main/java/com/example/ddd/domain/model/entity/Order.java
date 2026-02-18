@@ -3,6 +3,7 @@ package com.example.ddd.domain.model.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.example.ddd.domain.model.valueobject.Money;
+import com.example.ddd.domain.model.valueobject.OrderEvent;
 import com.example.ddd.domain.model.valueobject.OrderStatus;
 import com.example.ddd.infrastructure.persistence.handler.MoneyTypeHandler;
 import com.example.ddd.infrastructure.persistence.handler.OrderStatusTypeHandler;
@@ -150,6 +151,35 @@ public class Order extends BaseEntity {
         this.payAmount = amountValue != null ? Money.of(amountValue) : null;
     }
 
+    // ==================== 状态转换方法（基于事件驱动） ====================
+
+    /**
+     * 判断是否可以执行指定事件
+     *
+     * @param event 事件
+     * @return true 如果可以执行
+     */
+    public boolean canTrigger(OrderEvent event) {
+        return status != null && status.canTrigger(event);
+    }
+
+    /**
+     * 执行状态转换
+     *
+     * @param event 触发的事件
+     * @return 新状态
+     * @throws IllegalStateException 如果事件不能在当前状态下触发
+     */
+    public OrderStatus transitionStatus(OrderEvent event) {
+        if (status == null) {
+            throw new IllegalStateException("订单状态为空");
+        }
+        this.status = status.transition(event);
+        return this.status;
+    }
+
+    // ==================== 便捷方法（委托给 OrderStatus） ====================
+
     /**
      * 判断是否可以取消
      *
@@ -165,7 +195,7 @@ public class Order extends BaseEntity {
      * @return true 如果可以支付
      */
     public boolean canPay() {
-        return status == OrderStatus.PENDING;
+        return status != null && status.canPay();
     }
 
     /**
@@ -184,5 +214,14 @@ public class Order extends BaseEntity {
      */
     public boolean canComplete() {
         return status != null && status.canComplete();
+    }
+
+    /**
+     * 判断是否可以申请退款
+     *
+     * @return true 如果可以申请退款
+     */
+    public boolean canRefund() {
+        return status != null && status.canRefund();
     }
 }

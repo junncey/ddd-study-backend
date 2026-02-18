@@ -3,6 +3,7 @@ package com.example.ddd.domain.model.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.example.ddd.domain.model.valueobject.Money;
+import com.example.ddd.domain.model.valueobject.PaymentEvent;
 import com.example.ddd.domain.model.valueobject.PaymentMethod;
 import com.example.ddd.domain.model.valueobject.PaymentStatus;
 import com.example.ddd.infrastructure.persistence.handler.MoneyTypeHandler;
@@ -109,6 +110,35 @@ public class Payment extends BaseEntity {
     public void setAmountValue(String amountValue) {
         this.amount = amountValue != null ? Money.of(amountValue) : null;
     }
+
+    // ==================== 状态转换方法（基于事件驱动） ====================
+
+    /**
+     * 判断是否可以执行指定事件
+     *
+     * @param event 事件
+     * @return true 如果可以执行
+     */
+    public boolean canTrigger(PaymentEvent event) {
+        return status != null && status.canTrigger(event);
+    }
+
+    /**
+     * 执行状态转换
+     *
+     * @param event 触发的事件
+     * @return 新状态
+     * @throws IllegalStateException 如果事件不能在当前状态下触发
+     */
+    public PaymentStatus transitionStatus(PaymentEvent event) {
+        if (status == null) {
+            throw new IllegalStateException("支付状态为空");
+        }
+        this.status = status.transition(event);
+        return this.status;
+    }
+
+    // ==================== 便捷方法（委托给 PaymentStatus） ====================
 
     /**
      * 判断是否可以退款

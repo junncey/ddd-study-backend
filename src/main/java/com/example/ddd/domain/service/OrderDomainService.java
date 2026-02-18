@@ -2,6 +2,7 @@ package com.example.ddd.domain.service;
 
 import com.example.ddd.domain.model.entity.*;
 import com.example.ddd.domain.model.valueobject.Money;
+import com.example.ddd.domain.model.valueobject.OrderEvent;
 import com.example.ddd.domain.model.valueobject.OrderStatus;
 import com.example.ddd.domain.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -132,9 +133,12 @@ public class OrderDomainService extends DomainService {
             throw new IllegalArgumentException("无权操作此订单");
         }
 
-        // 验证状态
-        if (!order.canCancel()) {
-            throw new IllegalArgumentException("当前状态不允许取消订单");
+        // 使用事件驱动的状态转换
+        OrderStatus oldStatus = order.getStatus();
+        try {
+            order.transitionStatus(OrderEvent.CANCEL);
+        } catch (IllegalStateException e) {
+            throw new IllegalArgumentException(e.getMessage());
         }
 
         // 恢复库存
@@ -143,14 +147,12 @@ public class OrderDomainService extends DomainService {
             productSkuRepository.increaseStock(item.getSkuId(), item.getQuantity());
         }
 
-        // 更新订单状态
-        OrderStatus oldStatus = order.getStatus();
-        order.setStatus(OrderStatus.CANCELLED);
+        // 设置取消时间
         order.setCancelTime(LocalDateTime.now());
         orderRepository.update(order);
 
         // 记录状态日志
-        recordStatusLog(orderId, oldStatus.getValue(), OrderStatus.CANCELLED.getValue(), "取消订单");
+        recordStatusLog(orderId, oldStatus.getValue(), order.getStatus().getValue(), "取消订单");
 
         return order;
     }
@@ -170,19 +172,20 @@ public class OrderDomainService extends DomainService {
             throw new IllegalArgumentException("订单不存在");
         }
 
-        // 验证状态
-        if (!order.canPay()) {
-            throw new IllegalArgumentException("当前状态不允许支付");
+        // 使用事件驱动的状态转换
+        OrderStatus oldStatus = order.getStatus();
+        try {
+            order.transitionStatus(OrderEvent.PAY);
+        } catch (IllegalStateException e) {
+            throw new IllegalArgumentException(e.getMessage());
         }
 
-        // 更新订单状态
-        OrderStatus oldStatus = order.getStatus();
-        order.setStatus(OrderStatus.PAID);
+        // 设置支付时间
         order.setPayTime(LocalDateTime.now());
         orderRepository.update(order);
 
         // 记录状态日志
-        recordStatusLog(orderId, oldStatus.getValue(), OrderStatus.PAID.getValue(), "支付成功");
+        recordStatusLog(orderId, oldStatus.getValue(), order.getStatus().getValue(), "支付成功");
 
         return order;
     }
@@ -202,25 +205,26 @@ public class OrderDomainService extends DomainService {
             throw new IllegalArgumentException("订单不存在");
         }
 
-        // 验证状态
-        if (!order.canShip()) {
-            throw new IllegalArgumentException("当前状态不允许发货");
+        // 使用事件驱动的状态转换
+        OrderStatus oldStatus = order.getStatus();
+        try {
+            order.transitionStatus(OrderEvent.SHIP);
+        } catch (IllegalStateException e) {
+            throw new IllegalArgumentException(e.getMessage());
         }
 
-        // 更新订单状态
-        OrderStatus oldStatus = order.getStatus();
-        order.setStatus(OrderStatus.SHIPPED);
+        // 设置发货时间
         order.setShipTime(LocalDateTime.now());
         orderRepository.update(order);
 
         // 记录状态日志
-        recordStatusLog(orderId, oldStatus.getValue(), OrderStatus.SHIPPED.getValue(), "发货");
+        recordStatusLog(orderId, oldStatus.getValue(), order.getStatus().getValue(), "发货");
 
         return order;
     }
 
     /**
-     * 完成订单
+     * 完成订单（确认收货）
      *
      * @param orderId 订单ID
      * @return 更新后的订单
@@ -234,19 +238,20 @@ public class OrderDomainService extends DomainService {
             throw new IllegalArgumentException("订单不存在");
         }
 
-        // 验证状态
-        if (!order.canComplete()) {
-            throw new IllegalArgumentException("当前状态不允许完成订单");
+        // 使用事件驱动的状态转换
+        OrderStatus oldStatus = order.getStatus();
+        try {
+            order.transitionStatus(OrderEvent.CONFIRM);
+        } catch (IllegalStateException e) {
+            throw new IllegalArgumentException(e.getMessage());
         }
 
-        // 更新订单状态
-        OrderStatus oldStatus = order.getStatus();
-        order.setStatus(OrderStatus.COMPLETED);
+        // 设置完成时间
         order.setCompleteTime(LocalDateTime.now());
         orderRepository.update(order);
 
         // 记录状态日志
-        recordStatusLog(orderId, oldStatus.getValue(), OrderStatus.COMPLETED.getValue(), "完成订单");
+        recordStatusLog(orderId, oldStatus.getValue(), order.getStatus().getValue(), "确认收货");
 
         return order;
     }

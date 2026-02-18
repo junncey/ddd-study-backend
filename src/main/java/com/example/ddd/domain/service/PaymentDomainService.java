@@ -2,9 +2,7 @@ package com.example.ddd.domain.service;
 
 import com.example.ddd.domain.model.entity.Order;
 import com.example.ddd.domain.model.entity.Payment;
-import com.example.ddd.domain.model.valueobject.Money;
-import com.example.ddd.domain.model.valueobject.PaymentMethod;
-import com.example.ddd.domain.model.valueobject.PaymentStatus;
+import com.example.ddd.domain.model.valueobject.*;
 import com.example.ddd.domain.repository.OrderRepository;
 import com.example.ddd.domain.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
@@ -81,22 +79,28 @@ public class PaymentDomainService extends DomainService {
             throw new IllegalArgumentException("支付记录不存在");
         }
 
-        if (!payment.getStatus().canTransitionTo(PaymentStatus.SUCCESS)) {
-            throw new IllegalArgumentException("当前状态不允许支付成功");
+        // 使用事件驱动的状态转换
+        PaymentStatus oldStatus = payment.getStatus();
+        try {
+            payment.setStatus(payment.getStatus().transition(PaymentEvent.PAY_SUCCESS));
+        } catch (IllegalStateException e) {
+            throw new IllegalArgumentException(e.getMessage());
         }
 
-        // 更新支付状态
-        payment.setStatus(PaymentStatus.SUCCESS);
         payment.setTransactionId(transactionId);
         payment.setPayTime(LocalDateTime.now());
         paymentRepository.update(payment);
 
         // 更新订单状态为已支付
         Order order = orderRepository.findById(payment.getOrderId());
-        if (order != null && order.canPay()) {
-            order.setStatus(com.example.ddd.domain.model.valueobject.OrderStatus.PAID);
-            order.setPayTime(LocalDateTime.now());
-            orderRepository.update(order);
+        if (order != null) {
+            try {
+                order.transitionStatus(OrderEvent.PAY);
+                order.setPayTime(LocalDateTime.now());
+                orderRepository.update(order);
+            } catch (IllegalStateException e) {
+                log.warn("订单状态更新失败: {}", e.getMessage());
+            }
         }
     }
 
@@ -114,11 +118,13 @@ public class PaymentDomainService extends DomainService {
             throw new IllegalArgumentException("支付记录不存在");
         }
 
-        if (!payment.getStatus().canTransitionTo(PaymentStatus.FAILED)) {
-            throw new IllegalArgumentException("当前状态不允许支付失败");
+        // 使用事件驱动的状态转换
+        try {
+            payment.setStatus(payment.getStatus().transition(PaymentEvent.PAY_FAILED));
+        } catch (IllegalStateException e) {
+            throw new IllegalArgumentException(e.getMessage());
         }
 
-        payment.setStatus(PaymentStatus.FAILED);
         paymentRepository.update(payment);
     }
 
@@ -136,11 +142,13 @@ public class PaymentDomainService extends DomainService {
             throw new IllegalArgumentException("支付记录不存在");
         }
 
-        if (!payment.canRefund()) {
-            throw new IllegalArgumentException("当前状态不允许退款");
+        // 使用事件驱动的状态转换
+        try {
+            payment.setStatus(payment.getStatus().transition(PaymentEvent.APPLY_REFUND));
+        } catch (IllegalStateException e) {
+            throw new IllegalArgumentException(e.getMessage());
         }
 
-        payment.setStatus(PaymentStatus.REFUNDING);
         paymentRepository.update(payment);
     }
 
@@ -158,18 +166,59 @@ public class PaymentDomainService extends DomainService {
             throw new IllegalArgumentException("支付记录不存在");
         }
 
-        if (!payment.getStatus().canTransitionTo(PaymentStatus.REFUNDED)) {
-            throw new IllegalArgumentException("当前状态不允许退款完成");
+        // 使用事件驱动的状态转换
+        try {
+            payment.setStatus(payment.getStatus().transition(PaymentEvent.REFUND_SUCCESS));
+        } catch (IllegalStateException e) {
+            throw new IllegalArgumentException(e.getMessage());
         }
 
-        payment.setStatus(PaymentStatus.REFUNDED);
         paymentRepository.update(payment);
 
         // 更新订单状态为已退款
         Order order = orderRepository.findById(payment.getOrderId());
         if (order != null) {
-            order.setStatus(com.example.ddd.domain.model.valueobject.OrderStatus.REFUNDED);
-            orderRepository.update(order);
+            try {
+                order.transitionStatus(OrderEvent.REFUND_SUCCESS);
+                orderRepository.update(order);
+            } catch (IllegalStateException e) {
+                log.warn("订单状态更新失败: {}", e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * 处理退款失败
+     *
+     * @param paymentNo 支付单号
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void handleRefundFailed(String paymentNo) {
+        validate();
+
+        Payment payment = paymentRepository.findByPaymentNo(paymentNo);
+        if (payment == null) {
+            throw new IllegalArgumentException("支付记录不存在");
+        }
+
+        // 使用事件驱动的状态转换
+        try {
+            payment.setStatus(payment.getStatus().transition(PaymentEvent.REFUND_FAILED));
+        } catch (IllegalStateException e) {
+            throw new IllegalArgumentException(e.getMessage());
+        }
+
+        paymentRepository.update(payment);
+
+        // 更新订单状态（退款失败回退到已完成）
+        Order order = orderRepository.findById(payment.getOrderId());
+        if (order != null) {
+            try {
+                order.transitionStatus(OrderEvent.REFUND_FAILED);
+                orderRepository.update(order);
+            } catch (IllegalStateException e) {
+                log.warn("订单状态更新失败: {}", e.getMessage());
+            }
         }
     }
 }
