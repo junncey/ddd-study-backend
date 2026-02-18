@@ -221,6 +221,34 @@ public class ProductApplicationService extends ApplicationService {
     }
 
     /**
+     * 搜索商品
+     */
+    public List<Product> searchProducts(String keyword) {
+        beforeExecute();
+        try {
+            List<Product> products = productRepository.searchByKeyword(keyword);
+            fillProductPriceAndStock(products);
+            return products;
+        } finally {
+            afterExecute();
+        }
+    }
+
+    /**
+     * 分页搜索商品
+     */
+    public IPage<Product> pageSearchProducts(Long current, Long size, String keyword) {
+        beforeExecute();
+        try {
+            IPage<Product> page = productRepository.pageSearchByKeyword(new Page<>(current, size), keyword);
+            fillProductPriceAndStock(page.getRecords());
+            return page;
+        } finally {
+            afterExecute();
+        }
+    }
+
+    /**
      * 从请求DTO创建商品（同时创建默认SKU）
      */
     public Product createProductFromRequest(ProductCreateRequest request) {

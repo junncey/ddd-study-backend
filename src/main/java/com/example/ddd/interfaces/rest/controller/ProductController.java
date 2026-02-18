@@ -170,4 +170,25 @@ public class ProductController {
         IPage<Product> page = productApplicationService.pageProducts(current, size, shopId, categoryId, status);
         return Response.success(page);
     }
+
+    /**
+     * 搜索商品（公开）
+     */
+    @GetMapping("/search")
+    public Response<List<Product>> search(@RequestParam String keyword) {
+        List<Product> products = productApplicationService.searchProducts(keyword);
+        return Response.success(products);
+    }
+
+    /**
+     * 分页搜索商品（公开）
+     */
+    @GetMapping("/search/page")
+    public Response<IPage<Product>> searchPage(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "1") Long current,
+            @RequestParam(defaultValue = "10") Long size) {
+        IPage<Product> page = productApplicationService.pageSearchProducts(current, size, keyword);
+        return Response.success(page);
+    }
 }

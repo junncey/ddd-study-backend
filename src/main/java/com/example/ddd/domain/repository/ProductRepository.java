@@ -55,4 +55,21 @@ public interface ProductRepository extends BaseRepository<Product> {
      * @return 分页结果
      */
     IPage<Product> pageOnSale(Page<Product> page);
+
+    /**
+     * 搜索商品（按名称模糊查询）
+     *
+     * @param keyword 搜索关键词
+     * @return 商品列表
+     */
+    List<Product> searchByKeyword(String keyword);
+
+    /**
+     * 分页搜索商品（按名称模糊查询）
+     *
+     * @param page    分页对象
+     * @param keyword 搜索关键词
+     * @return 分页结果
+     */
+    IPage<Product> pageSearchByKeyword(Page<Product> page, String keyword);
 }

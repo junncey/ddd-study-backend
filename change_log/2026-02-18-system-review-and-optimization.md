@@ -71,56 +71,119 @@
   - 移除header-right区域重复的购物车图标
 - **测试验证**: ✅ MCP浏览器测试，角标显示正常无重复
 
-#### C-2: 订单确认页商品信息缺失 ⏳代码已修改，待测试
+#### C-2: 订单确认页商品信息缺失 ✅已修复
 - **位置**: `frontend/src/pages/consumer/OrderCreate/index.tsx`
 - **现象**: 商品清单表格中缺少商品图片和名称
 - **原因**: CartItem接口未包含完整的商品信息
 - **影响**: 用户无法确认订单中的具体商品
 - **优先级**: P1
-- **解决方案**: 创建 CartItemVO 返回完整商品信息
+- **解决方案**: ✅ 创建 CartItemVO 返回完整商品信息
 - **修改的文件**:
   - `CartItemVO.java` - 新增 VO 类，包含商品名称、图片等字段
   - `CartApplicationService.java` - 新增 getCartItemsWithProductInfo() 方法
   - `CartController.java` - getMyCart() 改用 CartItemVO
-- **状态**: 代码已修改，但由于后端服务无法重启，待后续测试验证
+- **测试验证**: ✅ MCP浏览器测试通过
+  - 订单确认页面正确显示商品名称（高端笔记本电脑）
+  - 正确显示SKU规格（默认规格）
+  - 正确显示商品图片、单价、数量、小计
 
-#### C-3: 搜索功能未实现
-- **位置**: `frontend/src/components/Layout/index.tsx`
+#### C-3: 搜索功能未实现 ✅已修复
+- **位置**: `frontend/src/components/Layout/index.tsx`、`ProductList/index.tsx`
 - **现象**: 头部搜索框无实际搜索功能
 - **影响**: 用户无法快速查找商品
 - **优先级**: P1
+- **解决方案**: ✅ 实现后端搜索API + 前端搜索功能
+- **修改的文件**:
+  - `ProductRepository.java` - 新增 `searchByKeyword()`、`pageSearchByKeyword()` 接口
+  - `ProductRepositoryImpl.java` - 实现搜索方法（模糊查询商品名称）
+  - `ProductApplicationService.java` - 新增 `searchProducts()`、`pageSearchProducts()` 方法
+  - `ProductController.java` - 新增 `/products/search`、`/products/search/page` 接口
+  - `frontend/src/api/index.ts` - 新增 `searchProducts()` API 函数
+  - `frontend/src/components/Layout/index.tsx` - 添加搜索框事件处理
+  - `frontend/src/pages/consumer/ProductList/index.tsx` - 支持URL参数搜索、调用后端搜索API
+- **测试验证**: ✅ MCP浏览器测试通过
+  - URL带搜索参数正确显示搜索结果
+  - 头部搜索框输入关键词后按回车可搜索
+  - 搜索结果页面显示匹配的商品
 
 ### 2.3 中等优先级问题（Major）
 
-#### M-1: 收藏功能未实现
+#### M-1: 收藏功能未实现 ✅已修复
 - **位置**: `frontend/src/pages/consumer/ProductDetail/index.tsx`
 - **现象**: 收藏按钮点击无反应
 - **影响**: 缺少用户收藏管理功能
 - **优先级**: P2
+- **解决方案**: ✅ 实现收藏后端API + 前端交互
+- **修改的文件**:
+  - `FavoriteApplicationService.java` - 新增应用服务
+  - `FavoriteController.java` - 新增收藏API接口
+  - `frontend/src/api/index.ts` - 新增收藏API函数
+  - `frontend/src/pages/consumer/ProductDetail/index.tsx` - 添加收藏状态查询和切换功能
+- **测试验证**: ✅ MCP浏览器测试通过
+  - 点击收藏按钮成功添加收藏（按钮显示"已收藏"）
+  - 再次点击成功取消收藏（按钮显示"收藏"）
 
-#### M-2: 商品详情页图片展示单一
+#### M-2: 商品详情页图片展示单一 ✅已修复
 - **位置**: `frontend/src/pages/consumer/ProductDetail/index.tsx`
 - **现象**: 只显示主图，无图片轮播
 - **影响**: 用户无法查看商品多角度图片
 - **优先级**: P2
+- **解决方案**: ✅ 使用 Ant Design Carousel 组件实现图片轮播
+- **修改的文件**:
+  - `frontend/src/api/index.ts` - 新增 getProductImages API
+  - `frontend/src/pages/consumer/ProductDetail/index.tsx` - 添加图片轮播组件
+- **功能特性**:
+  - 支持多图轮播，左右箭头切换
+  - 底部缩略图导航，点击切换
+  - 单图时自动隐藏轮播控件
+- **测试验证**: ✅ 功能正常，当前测试商品无多图数据
 
-#### M-3: 缺少支付功能
-- **位置**: 订单流程
+#### M-3: 缺少支付功能 ✅已修复
+- **位置**: 订单列表页面
 - **现象**: 创建订单后无支付入口
 - **影响**: 电商核心流程不完整
 - **优先级**: P2
+- **解决方案**: ✅ 在订单列表页添加支付按钮和支付弹窗
+- **修改的文件**:
+  - `frontend/src/pages/consumer/OrderList/index.tsx` - 添加支付按钮和支付弹窗
+- **功能特性**:
+  - "待支付"订单显示"支付"按钮
+  - 点击后弹出支付方式选择（支付宝/微信/银行卡）
+  - 支付成功后订单状态自动更新为"已支付"
+- **测试验证**: ✅ MCP浏览器测试通过
+  - 点击"支付"按钮弹出支付弹窗
+  - 选择支付方式后确认支付成功
+  - 订单状态从"待支付"变为"已支付"
 
-#### M-4: 地址默认标识不明确
+#### M-4: 地址默认标识不明确 ✅已修复
 - **位置**: `frontend/src/pages/consumer/AddressManage/index.tsx`
 - **现象**: 默认地址没有明显的"默认"标签
 - **影响**: 用户无法快速识别默认地址
 - **优先级**: P2
+- **解决方案**: ✅ 增强默认地址标识显示
+- **修改的文件**:
+  - `frontend/src/pages/consumer/AddressManage/index.tsx` - 增强默认地址显示
+- **功能特性**:
+  - 使用金色星星图标 + "默认地址" 标签
+  - 默认地址行高亮显示（浅黄色背景）
+- **测试验证**: ✅ MCP浏览器测试通过
 
-#### M-5: 个人中心页面缺失
+#### M-5: 个人中心页面缺失 ✅已修复
 - **位置**: 路由配置
 - **现象**: 点击"个人中心"跳转到订单页面
 - **影响**: 缺少用户个人信息管理入口
 - **优先级**: P2
+- **解决方案**: ✅ 创建个人中心页面
+- **修改的文件**:
+  - `frontend/src/pages/consumer/UserCenter/index.tsx` - 新建个人中心页面
+  - `frontend/src/router/index.tsx` - 添加 `/user` 路由
+  - `frontend/src/components/Layout/index.tsx` - 修改菜单跳转
+  - `frontend/src/api/index.ts` - 添加 logout API
+- **功能特性**:
+  - 显示用户头像、昵称、手机号
+  - 快捷入口：我的订单、我的收藏、收货地址
+  - 账号设置、退出登录功能
+- **测试验证**: ✅ MCP浏览器测试通过
 
 ### 2.4 低优先级问题（Minor）
 

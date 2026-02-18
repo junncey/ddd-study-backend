@@ -98,4 +98,24 @@ public class ProductRepositoryImpl implements ProductRepository {
                         .orderByDesc(Product::getCreateTime)
         );
     }
+
+    @Override
+    public List<Product> searchByKeyword(String keyword) {
+        return productMapper.selectList(
+                new LambdaQueryWrapper<Product>()
+                        .eq(Product::getStatus, ProductStatus.ON_SALE)
+                        .like(Product::getProductName, keyword)
+                        .orderByDesc(Product::getCreateTime)
+        );
+    }
+
+    @Override
+    public IPage<Product> pageSearchByKeyword(Page<Product> page, String keyword) {
+        return productMapper.selectPage(page,
+                new LambdaQueryWrapper<Product>()
+                        .eq(Product::getStatus, ProductStatus.ON_SALE)
+                        .like(Product::getProductName, keyword)
+                        .orderByDesc(Product::getCreateTime)
+        );
+    }
 }
