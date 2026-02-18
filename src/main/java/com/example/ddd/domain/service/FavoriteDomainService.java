@@ -46,6 +46,9 @@ public class FavoriteDomainService extends DomainService {
             throw new IllegalArgumentException("您已收藏过该商品");
         }
 
+        // 物理删除已存在的记录（包括逻辑删除的），避免唯一约束冲突
+        favoriteRepository.physicalDeleteByUserIdAndProductId(userId, productId);
+
         Favorite favorite = new Favorite();
         favorite.setUserId(userId);
         favorite.setProductId(productId);

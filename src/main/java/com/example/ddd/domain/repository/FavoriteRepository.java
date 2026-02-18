@@ -40,4 +40,10 @@ public interface FavoriteRepository extends BaseRepository<Favorite> {
      * 删除收藏
      */
     int deleteByUserIdAndProductId(Long userId, Long productId);
+
+    /**
+     * 物理删除收藏记录（包括逻辑删除的）
+     * 用于解决唯一约束冲突问题
+     */
+    int physicalDeleteByUserIdAndProductId(Long userId, Long productId);
 }

@@ -104,4 +104,9 @@ public class FavoriteRepositoryImpl implements FavoriteRepository {
                         .eq(Favorite::getProductId, productId)
         );
     }
+
+    @Override
+    public int physicalDeleteByUserIdAndProductId(Long userId, Long productId) {
+        return favoriteMapper.physicalDeleteByUserIdAndProductId(userId, productId);
+    }
 }
