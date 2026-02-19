@@ -2,18 +2,18 @@ package com.example.ddd.domain.model.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.example.ddd.domain.model.valueobject.Money;
 import com.example.ddd.domain.model.valueobject.ProductStatus;
-import com.example.ddd.infrastructure.persistence.handler.MoneyTypeHandler;
 import com.example.ddd.infrastructure.persistence.handler.ProductStatusTypeHandler;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * 商品实体
+ * 图片信息统一使用 t_file 表管理，通过 fileRepository 查询关联图片
  *
  * @author DDD Demo
  */
@@ -44,11 +44,6 @@ public class Product extends BaseEntity {
     private String productDesc;
 
     /**
-     * 主图
-     */
-    private String mainImage;
-
-    /**
      * 商品状态
      */
     @TableField(typeHandler = ProductStatusTypeHandler.class)
@@ -73,6 +68,18 @@ public class Product extends BaseEntity {
      */
     @TableField(exist = false)
     private String categoryName;
+
+    /**
+     * 商品主图URL（非持久化，从文件服务获取）
+     */
+    @TableField(exist = false)
+    private String mainImage;
+
+    /**
+     * 商品图片列表（非持久化，从 t_file 表查询）
+     */
+    @TableField(exist = false)
+    private List<String> imageFileKeys;
 
     /**
      * 获取状态值

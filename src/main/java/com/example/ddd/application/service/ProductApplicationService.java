@@ -7,6 +7,7 @@ import com.example.ddd.domain.model.entity.Category;
 import com.example.ddd.domain.model.entity.Product;
 import com.example.ddd.domain.model.entity.ProductImage;
 import com.example.ddd.domain.model.entity.ProductSku;
+import com.example.ddd.domain.model.valueobject.BizType;
 import com.example.ddd.domain.model.valueobject.Money;
 import com.example.ddd.domain.model.valueobject.ProductStatus;
 import com.example.ddd.domain.model.valueobject.Quantity;
@@ -15,13 +16,16 @@ import com.example.ddd.domain.repository.ProductImageRepository;
 import com.example.ddd.domain.repository.ProductRepository;
 import com.example.ddd.domain.repository.ProductSkuRepository;
 import com.example.ddd.domain.service.ProductDomainService;
+import com.example.ddd.interfaces.rest.dto.FileUploadResponse;
 import com.example.ddd.interfaces.rest.dto.ProductCreateRequest;
 import com.example.ddd.interfaces.rest.dto.ProductUpdateRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -40,6 +44,7 @@ public class ProductApplicationService extends ApplicationService {
     private final ProductRepository productRepository;
     private final ProductSkuRepository productSkuRepository;
     private final ProductImageRepository productImageRepository;
+    private final FileApplicationService fileApplicationService;
 
     /**
      * 创建商品
@@ -138,6 +143,58 @@ public class ProductApplicationService extends ApplicationService {
     }
 
     /**
+     * 获取商品图片URL列表
+     * 将fileKey转换为完整URL
+     */
+    public List<String> getProductImageUrls(Long productId) {
+        beforeExecute();
+        try {
+            List<ProductImage> images = productImageRepository.findByProductId(productId);
+            if (images == null || images.isEmpty()) {
+                // 从文件服务获取图片
+                List<FileUploadResponse> files = fileApplicationService.getFilesByBusiness(
+                        BizType.PRODUCT_IMAGE, productId);
+                if (files != null && !files.isEmpty()) {
+                    return files.stream()
+                            .map(FileUploadResponse::getUrl)
+                            .collect(java.util.stream.Collectors.toList());
+                }
+                return new ArrayList<>();
+            }
+            // 将 imageUrl (fileKey) 转换为完整 URL
+            List<String> urls = new ArrayList<>();
+            for (ProductImage image : images) {
+                String imageUrl = image.getImageUrl();
+                if (imageUrl != null && !imageUrl.isEmpty()) {
+                    // 检查是否已经是完整URL
+                    if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+                        urls.add(imageUrl);
+                    } else {
+                        // 从文件服务获取URL
+                        FileUploadResponse file = fileApplicationService.getByFileKey(imageUrl);
+                        if (file != null && file.getUrl() != null) {
+                            urls.add(file.getUrl());
+                        }
+                    }
+                }
+            }
+            // 如果图片表为空，尝试从文件服务获取
+            if (urls.isEmpty()) {
+                List<FileUploadResponse> files = fileApplicationService.getFilesByBusiness(
+                        BizType.PRODUCT_IMAGE, productId);
+                if (files != null && !files.isEmpty()) {
+                    urls = files.stream()
+                            .map(FileUploadResponse::getUrl)
+                            .collect(java.util.stream.Collectors.toList());
+                }
+            }
+            return urls;
+        } finally {
+            afterExecute();
+        }
+    }
+
+    /**
      * 根据店铺获取商品列表
      */
     public List<Product> getProductsByShopId(Long shopId) {
@@ -154,6 +211,7 @@ public class ProductApplicationService extends ApplicationService {
 
     /**
      * 填充商品的价格和库存信息（从SKU聚合）
+     * 同时填充商品主图（从文件服务获取）
      */
     private void fillProductPriceAndStock(List<Product> products) {
         if (products == null || products.isEmpty()) {
@@ -184,6 +242,13 @@ public class ProductApplicationService extends ApplicationService {
                 product.setMinPrice(BigDecimal.ZERO);
                 product.setTotalStock(0);
                 log.info("fillProductPriceAndStock: no SKUs found for productId={}, setting defaults", product.getId());
+            }
+
+            // 填充商品主图（从文件服务获取）
+            FileUploadResponse mainImage = fileApplicationService.getMainImage(BizType.PRODUCT_IMAGE, product.getId());
+            if (mainImage != null && mainImage.getUrl() != null) {
+                product.setMainImage(mainImage.getUrl());
+                log.info("fillProductPriceAndStock: set mainImage for productId={}", product.getId());
             }
         }
     }
@@ -283,6 +348,7 @@ public class ProductApplicationService extends ApplicationService {
     /**
      * 从请求DTO创建商品（同时创建默认SKU）
      */
+    @Transactional(rollbackFor = Exception.class)
     public Product createProductFromRequest(ProductCreateRequest request) {
         beforeExecute();
         try {
@@ -292,7 +358,6 @@ public class ProductApplicationService extends ApplicationService {
             product.setCategoryId(request.getCategoryId());
             product.setProductName(request.getProductName());
             product.setProductDesc(request.getProductDesc());
-            product.setMainImage(request.getMainImage());
             if (request.getStatus() != null) {
                 product.setStatus(ProductStatus.fromValue(request.getStatus()));
             } else {
@@ -309,9 +374,33 @@ public class ProductApplicationService extends ApplicationService {
                 defaultSku.setSpecs("[]");
             }
 
-            return productDomainService.createProduct(product,
+            // 创建商品图片列表
+            List<ProductImage> imageList = null;
+            if (request.getImageFileKeys() != null && !request.getImageFileKeys().isEmpty()) {
+                imageList = new ArrayList<>();
+                for (int i = 0; i < request.getImageFileKeys().size(); i++) {
+                    ProductImage image = new ProductImage();
+                    image.setImageUrl(request.getImageFileKeys().get(i));
+                    image.setSort(i);
+                    imageList.add(image);
+                }
+            }
+
+            Product saved = productDomainService.createProduct(product,
                     defaultSku != null ? Collections.singletonList(defaultSku) : null,
-                    null);
+                    imageList);
+
+            // 绑定图片文件到商品业务
+            if (request.getImageFileKeys() != null && !request.getImageFileKeys().isEmpty()) {
+                fileApplicationService.bindToBusiness(
+                        request.getImageFileKeys(),
+                        BizType.PRODUCT_IMAGE,
+                        saved.getId()
+                );
+                log.info("商品图片绑定成功: productId={}, imageCount={}", saved.getId(), request.getImageFileKeys().size());
+            }
+
+            return saved;
         } finally {
             afterExecute();
         }
@@ -320,6 +409,7 @@ public class ProductApplicationService extends ApplicationService {
     /**
      * 从请求DTO更新商品（同时更新默认SKU）
      */
+    @Transactional(rollbackFor = Exception.class)
     public Product updateProductFromRequest(Long productId, ProductUpdateRequest request) {
         beforeExecute();
         try {
@@ -338,9 +428,6 @@ public class ProductApplicationService extends ApplicationService {
             }
             if (request.getProductDesc() != null) {
                 product.setProductDesc(request.getProductDesc());
-            }
-            if (request.getMainImage() != null) {
-                product.setMainImage(request.getMainImage());
             }
             if (request.getStatus() != null) {
                 product.setStatus(ProductStatus.fromValue(request.getStatus()));
@@ -369,9 +456,34 @@ public class ProductApplicationService extends ApplicationService {
                 }
             }
 
-            return productDomainService.updateProduct(product,
+            // 更新商品图片列表
+            List<ProductImage> imageList = null;
+            if (request.getImageFileKeys() != null) {
+                imageList = new ArrayList<>();
+                for (int i = 0; i < request.getImageFileKeys().size(); i++) {
+                    ProductImage image = new ProductImage();
+                    image.setProductId(productId);
+                    image.setImageUrl(request.getImageFileKeys().get(i));
+                    image.setSort(i);
+                    imageList.add(image);
+                }
+            }
+
+            Product updated = productDomainService.updateProduct(product,
                     defaultSku != null ? Collections.singletonList(defaultSku) : null,
-                    null);
+                    imageList);
+
+            // 绑定图片文件到商品业务
+            if (request.getImageFileKeys() != null && !request.getImageFileKeys().isEmpty()) {
+                fileApplicationService.bindToBusiness(
+                        request.getImageFileKeys(),
+                        BizType.PRODUCT_IMAGE,
+                        productId
+                );
+                log.info("商品图片绑定成功: productId={}, imageCount={}", productId, request.getImageFileKeys().size());
+            }
+
+            return updated;
         } finally {
             afterExecute();
         }

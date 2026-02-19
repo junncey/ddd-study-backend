@@ -14,7 +14,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 商品控制器
@@ -132,11 +134,12 @@ public class ProductController {
 
     /**
      * 获取商品图片列表（公开）
+     * 返回图片URL列表
      */
     @GetMapping("/{id}/images")
-    public Response<List<ProductImage>> getImages(@PathVariable Long id) {
-        List<ProductImage> images = productApplicationService.getProductImages(id);
-        return Response.success(images);
+    public Response<List<String>> getImages(@PathVariable Long id) {
+        List<String> imageUrls = productApplicationService.getProductImageUrls(id);
+        return Response.success(imageUrls);
     }
 
     /**
