@@ -69,11 +69,15 @@ public class AuthController {
         String loginIp = IpUtil.getClientIp(httpRequest);
         String userAgent = httpRequest.getHeader("User-Agent");
 
-        // 验证验证码（如果提供了验证码）
-        if (request.getCaptchaCode() != null && request.getCaptchaKey() != null) {
-            if (!captchaApplicationService.verifyCaptcha(request.getCaptchaKey(), request.getCaptchaCode())) {
-                return Response.validationError("验证码错误");
-            }
+        // 强制验证验证码
+        if (request.getCaptchaKey() == null || request.getCaptchaKey().isBlank()) {
+            return Response.validationError("请先获取验证码");
+        }
+        if (request.getCaptchaCode() == null || request.getCaptchaCode().isBlank()) {
+            return Response.validationError("请输入验证码");
+        }
+        if (!captchaApplicationService.verifyCaptcha(request.getCaptchaKey(), request.getCaptchaCode())) {
+            return Response.validationError("验证码错误或已过期");
         }
 
         LoginResponse response = authApplicationService.login(
@@ -101,11 +105,15 @@ public class AuthController {
             return Response.validationError("两次密码不一致");
         }
 
-        // 验证验证码（如果提供了验证码）
-        if (request.getCaptchaCode() != null && request.getCaptchaKey() != null) {
-            if (!captchaApplicationService.verifyCaptcha(request.getCaptchaKey(), request.getCaptchaCode())) {
-                return Response.validationError("验证码错误");
-            }
+        // 强制验证验证码
+        if (request.getCaptchaKey() == null || request.getCaptchaKey().isBlank()) {
+            return Response.validationError("请先获取验证码");
+        }
+        if (request.getCaptchaCode() == null || request.getCaptchaCode().isBlank()) {
+            return Response.validationError("请输入验证码");
+        }
+        if (!captchaApplicationService.verifyCaptcha(request.getCaptchaKey(), request.getCaptchaCode())) {
+            return Response.validationError("验证码错误或已过期");
         }
 
         // 创建用户对象

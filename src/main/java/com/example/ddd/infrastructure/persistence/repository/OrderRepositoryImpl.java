@@ -10,6 +10,7 @@ import com.example.ddd.infrastructure.persistence.mapper.OrderMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -104,6 +105,16 @@ public class OrderRepositoryImpl implements OrderRepository {
                 new LambdaQueryWrapper<Order>()
                         .eq(Order::getShopId, shopId)
                         .orderByDesc(Order::getCreateTime)
+        );
+    }
+
+    @Override
+    public List<Order> findTimeoutPendingOrders(LocalDateTime timeoutThreshold) {
+        return orderMapper.selectList(
+                new LambdaQueryWrapper<Order>()
+                        .eq(Order::getStatus, OrderStatus.PENDING)
+                        .lt(Order::getCreateTime, timeoutThreshold)
+                        .orderByAsc(Order::getCreateTime)
         );
     }
 }

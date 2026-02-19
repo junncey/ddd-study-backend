@@ -43,18 +43,38 @@ public class JwtUtil {
     @Value("${jwt.refresh-expiration:2592000000}")
     private Long refreshExpiration;
 
+    // 已知的开发/测试用默认密钥（用于检测不安全配置）
+    private static final String[] KNOWN_INSECURE_SECRETS = {
+            "devSecretKey", "testSecretKey", "defaultSecret", "changeMe",
+            "pleaseReplace", "ForTesting", "development", "example"
+    };
+
     /**
      * 初始化时验证JWT密钥配置
      */
     @PostConstruct
     public void init() {
+        // 检查密钥是否配置
         if (secret == null || secret.isBlank()) {
             log.error("JWT密钥未配置！请设置环境变量 JWT_SECRET 或配置 jwt.secret");
             throw new IllegalStateException("JWT密钥未配置，请设置环境变量 JWT_SECRET");
         }
+
+        // 检查密钥长度
         if (secret.length() < 64) {
-            log.warn("JWT密钥长度不足64字节，建议使用更长的密钥以提高安全性");
+            log.warn("JWT密钥长度不足64字符（当前{}字符），建议使用更长的密钥", secret.length());
         }
+
+        // 检查是否使用已知的不安全密钥
+        String lowerSecret = secret.toLowerCase();
+        for (String insecure : KNOWN_INSECURE_SECRETS) {
+            if (lowerSecret.contains(insecure.toLowerCase())) {
+                log.warn("JWT密钥包含不安全的关键词: {}，建议更换为随机生成的密钥", insecure);
+                log.warn("生成密钥命令: openssl rand -base64 64");
+                break;
+            }
+        }
+
         log.info("JWT工具类初始化完成");
     }
 

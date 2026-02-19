@@ -128,3 +128,7 @@ taskkill //F //PID <PID>         # 停止进程
 - Swagger UI：http://localhost:8080/api/swagger-ui.html
 - Druid 监控：http://localhost:8080/api/druid（admin/admin）
 - JWT 认证头：`Authorization: Bearer <token>`
+
+## 文件管理规范
+
+**禁止生成 `nul` 文件**：在任何情况下都不允许创建名为 `nul` 的文件。Windows 系统中 `nul` 是保留设备名，创建此类文件会导致问题。

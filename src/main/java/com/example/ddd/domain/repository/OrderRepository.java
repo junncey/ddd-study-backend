@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.ddd.domain.model.entity.Order;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -63,4 +64,12 @@ public interface OrderRepository extends BaseRepository<Order> {
      * @return 分页结果
      */
     IPage<Order> pageByShopId(Page<Order> page, Long shopId);
+
+    /**
+     * 查询超时未支付的订单
+     *
+     * @param timeoutThreshold 超时时间阈值（创建时间早于此时间的待支付订单）
+     * @return 超时订单列表
+     */
+    List<Order> findTimeoutPendingOrders(LocalDateTime timeoutThreshold);
 }
