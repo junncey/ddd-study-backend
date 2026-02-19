@@ -1,5 +1,6 @@
 package com.example.ddd.infrastructure.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,12 +22,24 @@ import java.io.IOException;
 public class SecurityHeadersConfig {
 
     /**
+     * CSP 连接源配置（开发环境可设置为 * 允许所有）
+     */
+    @Value("${CSP_CONNECT_SRC:'*'}")
+    private String cspConnectSrc;
+
+    /**
+     * 是否启用严格的安全头（开发环境可关闭）
+     */
+    @Value("${SECURITY_HEADERS_STRICT:false}")
+    private boolean strictSecurityHeaders;
+
+    /**
      * 安全响应头过滤器
      */
     @Bean
     public FilterRegistrationBean<SecurityHeadersFilter> securityHeadersFilter() {
         FilterRegistrationBean<SecurityHeadersFilter> registration = new FilterRegistrationBean<>();
-        registration.setFilter(new SecurityHeadersFilter());
+        registration.setFilter(new SecurityHeadersFilter(cspConnectSrc, strictSecurityHeaders));
         registration.addUrlPatterns("/*");
         registration.setOrder(1);
         registration.setName("securityHeadersFilter");
@@ -37,6 +50,14 @@ public class SecurityHeadersConfig {
      * 安全响应头过滤器实现
      */
     public static class SecurityHeadersFilter extends OncePerRequestFilter {
+
+        private final String cspConnectSrc;
+        private final boolean strictSecurityHeaders;
+
+        public SecurityHeadersFilter(String cspConnectSrc, boolean strictSecurityHeaders) {
+            this.cspConnectSrc = cspConnectSrc;
+            this.strictSecurityHeaders = strictSecurityHeaders;
+        }
 
         @Override
         protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -58,15 +79,16 @@ public class SecurityHeadersConfig {
             response.setHeader("Permissions-Policy",
                     "geolocation=(), microphone=(), camera=(), payment=()");
 
-            // Content Security Policy（基础配置，可根据需要调整）
-            // 注意：CSP配置需要根据实际业务需求调整
+            // Content Security Policy（根据环境配置调整）
+            // 开发环境允许所有连接，生产环境使用严格配置
+            String connectSrc = "*".equals(cspConnectSrc) ? "*" : "'self'";
             response.setHeader("Content-Security-Policy",
                     "default-src 'self'; " +
                     "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
                     "style-src 'self' 'unsafe-inline'; " +
                     "img-src 'self' data: https:; " +
                     "font-src 'self'; " +
-                    "connect-src 'self'; " +
+                    "connect-src " + connectSrc + "; " +
                     "frame-ancestors 'none';");
 
             // Cache-Control（对于API响应，通常不缓存）

@@ -6,6 +6,8 @@ server:
 spring:
   application:
     name: ddd-demo
+  profiles:
+    active: dev
 
   # 数据源配置
   datasource:

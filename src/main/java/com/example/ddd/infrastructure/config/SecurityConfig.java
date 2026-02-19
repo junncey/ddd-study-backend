@@ -43,8 +43,9 @@ public class SecurityConfig {
     /**
      * 允许的CORS来源（从环境变量配置）
      * 多个域名用逗号分隔，如：http://localhost:3000,https://example.com
+     * 使用 "*" 允许所有来源（仅限开发环境）
      */
-    @Value("${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173,http://localhost:5175,http://127.0.0.1:5175}")
+    @Value("${CORS_ALLOWED_ORIGINS:*}")
     private String allowedOrigins;
 
     /**
@@ -104,7 +105,13 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         // 允许的源（从环境变量读取，生产环境必须配置具体域名）
-        List<String> origins = Arrays.asList(allowedOrigins.split(","));
+        // 处理 "*" 通配符，允许所有来源
+        List<String> origins;
+        if ("*".equals(allowedOrigins.trim())) {
+            origins = List.of("*");
+        } else {
+            origins = Arrays.asList(allowedOrigins.split(","));
+        }
         configuration.setAllowedOriginPatterns(origins);
 
         // 允许的方法
