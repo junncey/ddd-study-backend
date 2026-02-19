@@ -41,6 +41,7 @@ nbdist/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+nul
 
 # Log files
 *.log
@@ -62,3 +63,4 @@ hs_err_pid*
 # Frontend (separate repository)
 frontend/
 /.mcp.json
+/uploads/

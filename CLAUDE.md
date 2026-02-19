@@ -33,6 +33,7 @@ mvn test -Dtest=EmailTest  # 运行单个测试
 ```bash
 cd frontend && npm run dev   # 启动开发服务器
 cd frontend && npm run build # 构建
+cd frontend && npm run lint  # 代码检查
 ```
 
 ## 六边形架构
@@ -73,6 +74,8 @@ cd frontend && npm run build # 构建
 
 值对象（`Money`、`Quantity`、`OrderStatus` 等）在数据库中以 JSON 格式存储。
 
+**后端**：每个值对象需创建对应的 TypeHandler（位于 `infrastructure/persistence/handler/`），实现 `BaseTypeHandler<T>` 接口。
+
 前端需要提取值对象的值：
 ```typescript
 const extractValue = (val: unknown): number => {
@@ -84,6 +87,16 @@ const extractValue = (val: unknown): number => {
   return 0;
 };
 ```
+
+## 文件存储
+
+支持多种存储后端（通过 `FILE_STORAGE_TYPE` 配置）：
+- `LOCAL`：本地文件系统（默认存储到 `uploads/` 目录）
+- `OSS`：阿里云 OSS
+- `COS`：腾讯云 COS
+- `S3`：AWS S3
+
+文件存储接口位于 `domain/repository/FileRepository`，实现位于 `infrastructure/storage/`。
 
 ## Git 仓库管理
 
@@ -122,12 +135,49 @@ netstat -ano | findstr :8080    # 检查端口
 taskkill //F //PID <PID>         # 停止进程
 ```
 
+**重要规则**：禁止直接杀死所有 `java.exe` 或 `node.exe` 进程（如 `taskkill /F /IM java.exe`）。只允许通过端口号查找并杀死占用该端口的具体进程 PID，以避免误杀其他正在运行的 Java/Node 应用。
+
 ## API 访问
 
 - API 前缀：`/api`
 - Swagger UI：http://localhost:8080/api/swagger-ui.html
 - Druid 监控：http://localhost:8080/api/druid（admin/admin）
 - JWT 认证头：`Authorization: Bearer <token>`
+
+## 环境变量配置
+
+关键配置可通过环境变量覆盖（见 `application.yml`）：
+
+| 变量 | 说明 | 默认值 |
+|------|------|--------|
+| `DB_HOST` / `DB_PORT` / `DB_NAME` | 数据库连接 | localhost:3307/ddd_demo |
+| `REDIS_HOST` / `REDIS_PORT` | Redis 连接 | localhost:6379 |
+| `JWT_SECRET` | JWT 密钥（生产环境必须配置） | 开发默认值 |
+| `FILE_STORAGE_TYPE` | 文件存储类型 | LOCAL |
+| `SWAGGER_ENABLED` | 是否启用 Swagger | false |
+
+## 验证码获取
+
+登录接口需要验证码，验证码结果存储在 Redis 中，可通过以下方式获取：
+
+**Redis Key 格式**：`captcha:{captchaKey}`
+
+**获取方式**：
+```bash
+# 连接 Redis 后执行
+GET captcha:{captchaKey}
+```
+
+**示例**：
+```bash
+# 1. 先调用接口获取 captchaKey
+curl http://localhost:8080/api/auth/captcha
+# 返回: {"code":200,"data":{"captchaKey":"xxx-xxx-xxx","captchaImage":"data:image/png;base64,..."}}
+
+# 2. 从 Redis 获取验证码值
+redis-cli GET captcha:xxx-xxx-xxx
+# 返回: "ABCD" (4位验证码)
+```
 
 ## 文件管理规范
 
