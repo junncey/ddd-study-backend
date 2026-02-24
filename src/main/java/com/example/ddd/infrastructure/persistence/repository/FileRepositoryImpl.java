@@ -99,6 +99,15 @@ public class FileRepositoryImpl implements FileRepository {
     }
 
     @Override
+    public List<FileInfo> findExpiredFiles() {
+        return fileMapper.selectList(
+                new LambdaQueryWrapper<FileInfo>()
+                        .in(FileInfo::getStatus, FileStatus.PENDING, FileStatus.DELETED)
+                        .lt(FileInfo::getExpireTime, LocalDateTime.now())
+        );
+    }
+
+    @Override
     public Optional<FileInfo> findByFileHash(String fileHash) {
         FileInfo fileInfo = fileMapper.selectOne(
                 new LambdaQueryWrapper<FileInfo>()

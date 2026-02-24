@@ -48,6 +48,13 @@ public interface FileRepository extends BaseRepository<FileInfo> {
     List<FileInfo> findExpiredPendingFiles();
 
     /**
+     * 查询所有过期文件（包括临时文件和已删除文件）
+     *
+     * @return 过期文件列表
+     */
+    List<FileInfo> findExpiredFiles();
+
+    /**
      * 根据文件哈希查询（用于去重）
      *
      * @param fileHash 文件MD5哈希

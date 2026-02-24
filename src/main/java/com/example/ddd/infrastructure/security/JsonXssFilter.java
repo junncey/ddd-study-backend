@@ -42,7 +42,7 @@ public class JsonXssFilter {
         FilterRegistrationBean<JsonXssFilterImpl> registration = new FilterRegistrationBean<>();
         registration.setFilter(new JsonXssFilterImpl());
         registration.addUrlPatterns("/*");
-        registration.setOrder(3);
+        registration.setOrder(1);  // 必须在XssFilter之前执行
         registration.setName("jsonXssFilter");
         return registration;
     }
@@ -80,16 +80,16 @@ public class JsonXssFilter {
         public JsonXssRequestWrapper(HttpServletRequest request) throws IOException {
             super(request);
 
-            // 读取请求体
-            StringBuilder stringBuilder = new StringBuilder();
-            try (BufferedReader reader = request.getReader()) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    stringBuilder.append(line);
-                }
+            // 读取请求体（使用 ServletInputStream 而不是 Reader，避免编码问题）
+            byte[] rawBody;
+            try (var inputStream = request.getInputStream()) {
+                rawBody = inputStream.readAllBytes();
+            } catch (Exception e) {
+                log.warn("读取请求体失败: {}", e.getMessage());
+                rawBody = new byte[0];
             }
 
-            String jsonBody = stringBuilder.toString();
+            String jsonBody = new String(rawBody, StandardCharsets.UTF_8);
 
             // 清洗JSON中的XSS
             if (!jsonBody.isBlank()) {

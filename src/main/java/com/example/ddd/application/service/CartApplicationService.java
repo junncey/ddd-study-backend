@@ -4,9 +4,11 @@ import com.example.ddd.application.ApplicationService;
 import com.example.ddd.domain.model.entity.CartItem;
 import com.example.ddd.domain.model.entity.Product;
 import com.example.ddd.domain.model.entity.ProductSku;
+import com.example.ddd.domain.model.valueobject.BizType;
 import com.example.ddd.domain.repository.ProductRepository;
 import com.example.ddd.domain.repository.ProductSkuRepository;
 import com.example.ddd.domain.service.CartDomainService;
+import com.example.ddd.interfaces.rest.dto.FileUploadResponse;
 import com.example.ddd.interfaces.rest.vo.CartItemVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +30,7 @@ public class CartApplicationService extends ApplicationService {
     private final CartDomainService cartDomainService;
     private final ProductSkuRepository productSkuRepository;
     private final ProductRepository productRepository;
+    private final FileApplicationService fileApplicationService;
 
     /**
      * 添加商品到购物车
@@ -108,8 +111,18 @@ public class CartApplicationService extends ApplicationService {
                     product = productRepository.findById(sku.getProductId());
                 }
 
+                // 获取商品主图（从文件服务获取）
+                String mainImage = null;
+                if (product != null) {
+                    FileUploadResponse mainImageFile = fileApplicationService.getMainImage(
+                            BizType.PRODUCT_IMAGE, product.getId());
+                    if (mainImageFile != null) {
+                        mainImage = mainImageFile.getUrl();
+                    }
+                }
+
                 // 构建VO
-                CartItemVO vo = CartItemVO.from(item, sku, product);
+                CartItemVO vo = CartItemVO.from(item, sku, product, mainImage);
                 result.add(vo);
             }
 

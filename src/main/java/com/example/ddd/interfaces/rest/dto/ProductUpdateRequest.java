@@ -3,6 +3,7 @@ package com.example.ddd.interfaces.rest.dto;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * 商品更新请求
@@ -28,9 +29,10 @@ public class ProductUpdateRequest {
     private String productDesc;
 
     /**
-     * 主图
+     * 商品图片文件key列表（用于绑定已上传的图片）
+     * 如果不为空，将替换原有图片
      */
-    private String mainImage;
+    private List<String> imageFileKeys;
 
     /**
      * 价格（用于更新默认SKU）

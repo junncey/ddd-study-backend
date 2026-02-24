@@ -3,6 +3,7 @@ package com.example.ddd.interfaces.rest.dto;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * 商品创建请求
@@ -33,9 +34,9 @@ public class ProductCreateRequest {
     private String productDesc;
 
     /**
-     * 主图
+     * 商品图片文件key列表（用于绑定已上传的图片）
      */
-    private String mainImage;
+    private List<String> imageFileKeys;
 
     /**
      * 价格（用于创建默认SKU）

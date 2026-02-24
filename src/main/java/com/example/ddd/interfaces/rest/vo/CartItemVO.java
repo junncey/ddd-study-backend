@@ -67,9 +67,10 @@ public class CartItemVO {
      * @param cartItem 购物车明细
      * @param sku      商品SKU
      * @param product  商品
+     * @param mainImage 商品主图URL（从文件服务获取）
      * @return CartItemVO
      */
-    public static CartItemVO from(CartItem cartItem, ProductSku sku, Product product) {
+    public static CartItemVO from(CartItem cartItem, ProductSku sku, Product product, String mainImage) {
         CartItemVO vo = new CartItemVO();
         vo.setId(cartItem.getId());
         vo.setSkuId(cartItem.getSkuId());
@@ -90,8 +91,10 @@ public class CartItemVO {
         // 商品信息
         if (product != null) {
             vo.setProductName(product.getProductName());
-            vo.setMainImage(product.getMainImage());
         }
+
+        // 设置主图（从文件服务获取）
+        vo.setMainImage(mainImage);
 
         return vo;
     }

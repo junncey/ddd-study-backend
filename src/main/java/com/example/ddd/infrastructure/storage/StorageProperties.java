@@ -33,9 +33,20 @@ public class StorageProperties {
     private Long maxSize = 10 * 1024 * 1024L; // 10MB
 
     /**
-     * 待绑定文件过期时间（小时）
+     * 待绑定文件过期时间（小时）- 已废弃，使用 pendingExpireDays
      */
+    @Deprecated
     private Integer pendingExpireHours = 24;
+
+    /**
+     * 临时文件/已删除文件过期天数（默认3天）
+     */
+    private Integer pendingExpireDays = 3;
+
+    /**
+     * 已绑定业务文件过期天数（默认2年 = 730天）
+     */
+    private Integer boundExpireDays = 730;
 
     /**
      * 本地存储配置

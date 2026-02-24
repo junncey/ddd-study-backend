@@ -95,21 +95,42 @@ public class FileInfo extends BaseEntity {
     /**
      * 绑定业务
      *
+     * @param bizType    业务类型
+     * @param bizId      业务ID
+     * @param expireDays 过期天数（已绑定文件）
+     */
+    public void bindBusiness(BizType bizType, Long bizId, int expireDays) {
+        this.bizType = bizType;
+        this.bizId = bizId;
+        this.status = FileStatus.BOUND;
+        this.expireTime = LocalDateTime.now().plusDays(expireDays);
+    }
+
+    /**
+     * 绑定业务（使用默认2年过期）
+     *
      * @param bizType 业务类型
      * @param bizId   业务ID
      */
     public void bindBusiness(BizType bizType, Long bizId) {
-        this.bizType = bizType;
-        this.bizId = bizId;
-        this.status = FileStatus.BOUND;
-        this.expireTime = null;
+        bindBusiness(bizType, bizId, 730);
     }
 
     /**
      * 标记删除
+     *
+     * @param expireDays 过期天数
+     */
+    public void markDeleted(int expireDays) {
+        this.status = FileStatus.DELETED;
+        this.expireTime = LocalDateTime.now().plusDays(expireDays);
+    }
+
+    /**
+     * 标记删除（使用默认3天过期）
      */
     public void markDeleted() {
-        this.status = FileStatus.DELETED;
+        markDeleted(3);
     }
 
     /**

@@ -45,7 +45,14 @@ public class XssFilter {
         protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                         FilterChain filterChain) throws ServletException, IOException {
 
-            // 创建包装后的请求对象
+            // JSON请求由JsonXssFilter处理，这里跳过
+            String contentType = request.getContentType();
+            if (contentType != null && contentType.contains("application/json")) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            // 创建包装后的请求对象（非JSON请求）
             XssHttpServletRequestWrapper wrappedRequest = new XssHttpServletRequestWrapper(request);
 
             filterChain.doFilter(wrappedRequest, response);

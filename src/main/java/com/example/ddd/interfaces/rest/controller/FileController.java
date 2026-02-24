@@ -78,6 +78,31 @@ public class FileController {
     }
 
     /**
+     * 上传商品图片（支持多图片上传）
+     */
+    @PostMapping("/product-images")
+    @Operation(summary = "上传商品图片", description = "上传商品图片，支持多图片上传，返回fileKey列表用于商品创建/修改时绑定")
+    public Response<List<FileUploadResponse>> uploadProductImages(
+            @Parameter(description = "上传的图片文件列表") @RequestParam("files") MultipartFile[] files,
+            @AuthenticationPrincipal Long userId) {
+
+        log.info("商品图片上传: count={}", files.length);
+
+        List<FileUploadResponse> results = new ArrayList<>();
+        for (MultipartFile file : files) {
+            try {
+                // 商品图片指定为 PRODUCT_IMAGE 类型
+                FileUploadResponse response = fileApplicationService.upload(file, userId, BizType.PRODUCT_IMAGE);
+                results.add(response);
+            } catch (Exception e) {
+                log.error("商品图片上传失败: {}", file.getOriginalFilename(), e);
+            }
+        }
+
+        return Response.success(results);
+    }
+
+    /**
      * 绑定文件到业务
      */
     @PostMapping("/bind")
