@@ -64,3 +64,6 @@ hs_err_pid*
 frontend/
 /.mcp.json
 /uploads/
+
+# Test images
+test_images/
